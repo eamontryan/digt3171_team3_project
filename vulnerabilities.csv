@@ -1,0 +1,13 @@
+VulnID,CVE,Name,Severity,#Alerts
+VULN-001,CVE-2021-44228,Log4Shell,Critical,3
+VULN-002,CVE-2017-0144,EternalBlue SMB RCE,Critical,3
+VULN-003,CVE-2018-8174,VBScript Engine RCE,High,3
+VULN-004,CVE-2019-11510,Pulse Secure VPN RCE,Critical,3
+VULN-005,CVE-2020-1472,Zerologon,Critical,3
+VULN-006,CVE-2022-22965,Spring4Shell,High,3
+VULN-007,CVE-2019-0708,BlueKeep RDP,Critical,3
+VULN-008,CVE-2017-5638,Struts2 RCE,High,3
+VULN-009,CVE-2020-0796,SMBGhost,High,3
+VULN-010,CVE-2017-11882,EQNEDT32 Overflow,Medium,3
+VULN-011,CVE-2013-2729,Outdated TLS Configuration,Low,3
+VULN-012,CVE-2019-3568,WhatsApp Buffer Overflow,Medium,3

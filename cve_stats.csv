@@ -1,0 +1,13 @@
+CVE,CVSS,ExploitabilityScore,PublishedDate,AttackVector,Description
+CVE-2021-44228,9.8,3.9,2021-12-10,Network,Remote code execution in Log4j logging library
+CVE-2017-0144,8.1,3.5,2017-03-14,Network,SMB RCE used by WannaCry ransomware
+CVE-2018-8174,7.5,2.8,2018-05-08,Network,VBScript engine RCE via malicious web content
+CVE-2019-11510,9.8,3.9,2019-04-24,Network,Pulse Secure VPN arbitrary file read/RCE
+CVE-2020-1472,10.0,3.9,2020-08-11,Network,Netlogon privilege escalation (Zerologon)
+CVE-2022-22965,9.8,3.9,2022-03-31,Network,Spring4Shell RCE in Spring framework
+CVE-2019-0708,9.8,3.9,2019-05-14,Network,BlueKeep RDP remote code execution
+CVE-2017-5638,7.5,2.8,2017-03-06,Network,Apache Struts2 Jakarta Multipart parser RCE
+CVE-2020-0796,10.0,3.9,2020-03-12,Network,SMBGhost RCE in SMBv3
+CVE-2017-11882,7.8,2.9,2017-11-14,Network,EQNEDT32 buffer overflow in MS Office
+CVE-2013-2729,5.0,1.2,2013-04-10,Network,Deprecated TLS/SSL protocol usage
+CVE-2019-3568,8.0,3.1,2019-05-13,Network,WhatsApp VOIP buffer overflow RCE

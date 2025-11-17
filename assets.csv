@@ -1,0 +1,7 @@
+AssetID,AssetName,AssetType
+AST-001,Payroll App Server,Server
+AST-002,Customer Web Frontend,Cloud
+AST-003,Core Switch 1,Networking
+AST-004,Finance Laptop 01,Workstation
+AST-005,HR Laptop 02,Workstation
+AST-006,Identity Provider,Cloud
