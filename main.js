@@ -141,7 +141,7 @@ demo = {
     new Chart(severityCtx, {
       type: "pie",
       data: {
-        labels: ["Critical", "High", "Medium", "Low"],
+        labels: ["High", "Medium", "Low"],
         datasets: [{
           backgroundColor: [
             "#dc3535b3",
@@ -151,7 +151,7 @@ demo = {
           ],
           borderColor: "#e47c05ff",
           borderWidth: 2,
-          data: [50, 25, 15, 10]
+          data: [50, 25, 25]
         }]
       },
       options: {
@@ -172,11 +172,11 @@ demo = {
         labels: ["Open", "Pending", "Closed"],
         datasets: [{
           backgroundColor: [
-            "rgba(0, 123, 255, 1)",
-            "rgba(0, 123, 255, 0.41)",
-            "rgba(0, 123, 255, 0.14)"
+            "rgba(254, 106, 0, 1)",
+            "rgba(254, 106, 0, 0.41)",
+            "rgba(254, 106, 0, 0.14)"
           ],
-          borderColor: "#007bff",
+          borderColor: "#f96332",
           borderWidth: 2,
           data: [40, 25, 20]
         }]
@@ -193,28 +193,23 @@ demo = {
     // 4. ORANGE PIE CHART – Asset Types
     // --------------------------------------------------------
     let assetCtx = document.getElementById("assetChart").getContext("2d");
+    
+    // REVERTING to original Orange Bar Chart
+    let assetGradient = createOrangeGradient(assetCtx);
 
     new Chart(assetCtx, {
-      type: "pie",
+      type: "bar",
       data: {
         labels: ["Workstation", "Server", "Cloud", "Networking"],
         datasets: [{
-          backgroundColor: [
-            "rgba(254, 106, 0, 1)",
-            "rgba(254, 106, 0, 0.6)",
-            "rgba(254, 106, 0, 0.4)",
-            "rgba(254, 106, 0, 0.2)"
-          ],
-          borderColor: "#f96332",
+          label: "Assets",
+          backgroundColor: assetGradient,
+          borderColor: assetGradient,
           borderWidth: 2,
           data: [2, 1, 2, 1]
         }]
       },
-      options: {
-        maintainAspectRatio: false,
-        cutoutPercentage: 55,
-        legend: { display: false }
-      }
+      options: gradientBarChartConfiguration
     });
 
     // UPDATED: Call the new function to load vulnerability data
