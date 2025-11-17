@@ -34,125 +34,133 @@
           </li>
           <li>
             <a href="#pie-charts">
-              <p>Pie Charts</p>
+              <p>Breakdowns</p>
             </a>
           </li>
           <li>
             <a href="#tables">
-              <p>Tables</p>
+              <p>Details</p>
             </a>
           </li>
         </ul>
-
       </div>
     </div>
 
-    <!-- MAIN PANEL -->
+    <!-- MAIN CONTENT -->
     <div class="main-panel">
 
       <!-- NAVBAR -->
       <nav class="navbar navbar-expand-lg navbar-absolute navbar-transparent">
         <div class="container-fluid">
           <div class="navbar-wrapper">
-            <a class="navbar-brand" href="javascript:void(0)">Dashboard</a>
+            <a class="navbar-brand" href="javascript:void(0)">Dashboard Overview</a>
           </div>
         </div>
       </nav>
 
       <!-- CONTENT -->
-      <div class="content" id="overview">
+      <div class="content">
 
-        <!-- OVERVIEW CHARTS -->
-        <div class="row">
-          <div class="col-6 col-sm-12">
-            <div class="card card-chart">
-              <div class="card-header">
-                <h5 class="card-category">Alert Tracker</h5>
-                <h2 class="card-title">Alerts</h2>
-              </div>
-              <div class="card-body">
-                <div class="chart-area"><canvas id="alertChart"></canvas></div>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-6 col-sm-12">
-            <div class="card card-chart">
-              <div class="card-header">
-                <h5 class="card-category">Vulnerability Tracker</h5>
-                <h2 class="card-title">Top Vulnerabilities</h2>
-              </div>
-              <div class="card-body">
-                <div class="chart-area"><canvas id="vulChart"></canvas></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- PIE CHARTS SECTION -->
-        <section id="pie-charts">
+        <!-- Section 1: Top Row Charts -->
+        <section id="overview">
           <div class="row">
-            <div class="col-lg-4">
-              <div class="card card-chart">
-                <div class="card-header">
-                  <h5 class="card-category">Alerts</h5>
-                  <h3 class="card-title">Severity</h3>
-                </div>
-                <div class="card-body">
-                  <div class="chart-area"><canvas id="severityChart"></canvas></div>
-                </div>
-              </div>
-            </div>
 
-            <div class="col-lg-4">
+            <!-- Main Bar Chart -->
+            <div class="col-12">
               <div class="card card-chart">
                 <div class="card-header">
-                  <h5 class="card-category">Alerts</h5>
-                  <h3 class="card-title">Status</h3>
+                  <h5 class="card-category">Overview</h5>
+                  <h3 class="card-title">Alerts by Department</h3>
                 </div>
                 <div class="card-body">
-                  <div class="chart-area"><canvas id="statusChart"></canvas></div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-lg-4">
-              <div class="card card-chart">
-                <div class="card-header">
-                  <h5 class="card-category">Alerts</h5>
-                  <h3 class="card-title">Assets</h3>
-                </div>
-                <div class="card-body">
-                  <div class="chart-area"><canvas id="assetChart"></canvas></div>
+                  <div class="chart-area">
+                    <canvas id="mainBarChart"></canvas>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        <!-- TABLES SECTION -->
+        <!-- Section 2: Pie Charts -->
+        <section id="pie-charts">
+          <div class="row">
+
+            <!-- Pie Chart 1 -->
+            <div class="col-lg-4">
+              <div class="card card-chart">
+                <div class="card-header">
+                  <h5 class="card-category">Alerts</h5>
+                  <h3 class="card-title">By Severity</h3>
+                </div>
+                <div class="card-body">
+                  <div class="chart-area">
+                    <canvas id="severityChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pie Chart 2 -->
+            <div class="col-lg-4">
+              <div class="card card-chart">
+                <div class="card-header">
+                  <h5 class="card-category">Alerts</h5>
+                  <h3 class="card-title">By Status</h3>
+                </div>
+                <div class="card-body">
+                  <div class="chart-area">
+                    <canvas id="statusChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pie Chart 3 -->
+            <div class="col-lg-4">
+              <div class="card card-chart">
+                <div class="card-header">
+                  <h5 class="card-category">Assets</h5>
+                  <h3 class="card-title">By Type</h3>
+                </div>
+                <div class="card-body">
+                  <div class="chart-area">
+                    <canvas id="assetChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+
+        <!-- Section 3: Tables -->
         <section id="tables">
           <div class="row">
-            <div class="col-lg-6 col-sm-12">
+
+            <!-- Left Table: High Risk Users -->
+            <div class="col-lg-6 col-md-12">
               <div class="card">
-                <div class="card-header"><h4 class="card-title">User Risk</h4></div>
+                <div class="card-header">
+                  <h4 class="card-title">High Risk Users</h4>
+                </div>
                 <div class="card-body">
                   <div class="table-responsive">
                     <table class="table tablesorter">
                       <thead class="text-primary">
                         <tr>
-                          <th>Name</th>
+                          <th>User</th>
                           <th>Department</th>
-                          <th class="text-center"># of Alerts</th>
                           <th class="text-center">Risk Score</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr><td>John Doe</td><td>Sales</td><td class="text-center">10</td><td class="text-center">50</td></tr>
-                        <tr><td>Jane Smith</td><td>Customer Service</td><td class="text-center">8</td><td class="text-center">40</td></tr>
-                        <tr><td>Rebecca Jones</td><td>Human Resources</td><td class="text-center">6</td><td class="text-center">30</td></tr>
-                        <tr><td>Brandon Cooper</td><td>Software Development</td><td class="text-center">5</td><td class="text-center">25</td></tr>
-                        <tr><td>Daniel Steward</td><td>IT</td><td class="text-center">1</td><td class="text-center">5</td></tr>
+                        <tr><td>Alice Jones</td><td>Finance</td><td class="text-center text-danger">90</td></tr>
+                        <tr><td>Dinesh Raja</td><td>IT</td><td class="text-center text-danger">80</td></tr>
+                        <tr><td>Bob Harrison</td><td>Engineering</td><td class="text-center text-warning">75</td></tr>
+                        <tr><td>Carla Smith</td><td>Sales</td><td class="text-center text-warning">68</td></tr>
+                        <tr><td>Emma Lee</td><td>HR</td><td class="text-center text-success">40</td></tr>
                       </tbody>
                     </table>
                   </div>
@@ -160,9 +168,12 @@
               </div>
             </div>
 
-            <div class="col-lg-6 col-sm-12">
+            <!-- Right Table: Top Vulnerabilities -->
+            <div class="col-lg-6 col-md-12">
               <div class="card">
-                <div class="card-header"><h4 class="card-title">CVE (Common Vulnerabilities & Exposures)</h4></div>
+                <div class="card-header">
+                  <h4 class="card-title">Top Vulnerabilities</h4>
+                </div>
                 <div class="card-body">
                   <div class="table-responsive">
                     <table class="table tablesorter">
@@ -171,12 +182,14 @@
                           <th>CVE</th><th>Name</th><th>Severity</th><th class="text-center"># of Alerts</th>
                         </tr>
                       </thead>
-                      <tbody>
-                        <tr><td>CVE-2017-0199</td><td>Microsoft Office RCE</td><td>High</td><td class="text-center">5</td></tr>
-                        <tr><td>CVE-2021-44228</td><td>Log4Shell RCE</td><td>Critical</td><td class="text-center">3</td></tr>
-                        <tr><td>CVE-2023-23916</td><td>AWS CLI Leak</td><td>Critical</td><td class="text-center">1</td></tr>
-                        <tr><td>CVE-2019-1652</td><td>Cisco Injection</td><td>Medium</td><td class="text-center">1</td></tr>
-                        <tr><td>CVE-2017-6736</td><td>Cisco SNMP DoS</td><td>Low</td><td class="text-center">1</td></tr>
+                      <!-- 
+                        UPDATED: 
+                        Removed the static, hard-coded table rows.
+                        Added id="vulnerability-table-body" to the <tbody> tag
+                        so main.js can target it and insert the data dynamically.
+                      -->
+                      <tbody id="vulnerability-table-body">
+                        <!-- Data will be loaded here by main.js -->
                       </tbody>
                     </table>
                   </div>
@@ -196,12 +209,6 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
   <script src="main.js"></script>
-
-  <script>
-    $(document).ready(function () {
-      demo.initDashboardPageCharts();
-    });
-  </script>
 
 </body>
 </html>
