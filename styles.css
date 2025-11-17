@@ -1,0 +1,281 @@
+/* --------------------------------------------------
+   BASIC RESET & TYPOGRAPHY
+-------------------------------------------------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #1e1e2f;
+  color: #fff;
+  font-weight: 400;
+  line-height: 1.6;
+  font-size: 16px;
+}
+
+h1, h2, h3, h4, h5 {
+  margin: 0 0 10px 0;
+  font-weight: 500;
+  line-height: 1.3;
+  color: #fff;
+}
+
+h1 { font-size: 28px; }
+h2 { font-size: 24px; }
+h3 { font-size: 20px; }
+h4 { font-size: 18px; }
+h5 { font-size: 16px; }
+
+p {
+  margin: 0 0 15px 0;
+  font-weight: 400;
+  color: #e0e0e0;
+}
+
+/* --------------------------------------------------
+   LAYOUT WRAPPER
+-------------------------------------------------- */
+.wrapper {
+  display: flex;
+  width: 100%;
+}
+
+/* --------------------------------------------------
+   SIDEBAR
+-------------------------------------------------- */
+.sidebar {
+  width: 240px;
+  background: #141420;
+  min-height: 100vh;
+  position: fixed;
+  border-right: 3px solid #ff7f11;
+  z-index: 1; /* keep sidebar behind floating burger */
+}
+
+.sidebar .logo {
+  padding: 20px;
+  text-align: center;
+}
+
+.sidebar .logo .simple-text {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.sidebar .nav {
+  list-style: none;
+  margin-top: 30px;
+  padding-left: 0;
+}
+
+.sidebar .nav li {
+  padding: 12px 20px;
+  font-weight: 400;
+  font-size: 15px;
+}
+
+.sidebar .nav li.active,
+.sidebar .nav li:hover {
+  background: #ff7f11;
+  border-radius: 6px;
+}
+
+.sidebar .nav a {
+  color: #fff;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.sidebar .nav i {
+  margin-right: 10px;
+}
+
+/* --------------------------------------------------
+   BURGER / SIDEBAR TOGGLE BUTTON (floating)
+-------------------------------------------------- */
+.navbar-toggler {
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 9999;            /* above everything */
+  border: none;
+  background: #ff7f11;      /* bright accent color */
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar-toggler .navbar-toggler-icon {
+  background-image: none;
+  width: 25px;
+  height: 2px;
+  background-color: #fff;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.navbar-toggler .navbar-toggler-icon::before,
+.navbar-toggler .navbar-toggler-icon::after {
+  content: '';
+  position: absolute;
+  width: 25px;
+  height: 2px;
+  background-color: #fff;
+  transition: all 0.3s ease;
+}
+
+.navbar-toggler .navbar-toggler-icon::before {
+  top: -8px;
+}
+
+.navbar-toggler .navbar-toggler-icon::after {
+  top: 8px;
+}
+
+/* Toggle animation for collapsed state */
+.navbar-toggler.collapsed .navbar-toggler-icon {
+  background-color: transparent;
+}
+
+.navbar-toggler.collapsed .navbar-toggler-icon::before {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.navbar-toggler.collapsed .navbar-toggler-icon::after {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+
+/* --------------------------------------------------
+   MAIN PANEL + NAVBAR
+-------------------------------------------------- */
+.main-panel {
+  margin-left: 240px;
+  width: calc(100% - 240px);
+}
+
+.navbar {
+  padding: 15px 25px;
+  background: transparent;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.navbar-brand {
+  color: #fff !important;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+/* --------------------------------------------------
+   CONTENT
+-------------------------------------------------- */
+.content {
+  padding: 30px;
+}
+
+/* --------------------------------------------------
+   CARDS
+-------------------------------------------------- */
+.card {
+  background: #27293d;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 25px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.card-header {
+  margin-bottom: 15px;
+}
+
+.card-category {
+  font-size: 14px;
+  color: #aaa;
+}
+
+.card-title {
+  font-size: 20px;
+  font-weight: 500;
+  color: #fff;
+}
+
+/* Chart container */
+.chart-area {
+  height: 260px;
+}
+
+/* --------------------------------------------------
+   TABLES
+-------------------------------------------------- */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #fff;
+}
+
+.table thead th {
+  padding: 12px;
+  background: #33334d;
+  border-bottom: 2px solid #ff7f11;
+  font-weight: 500;
+}
+
+.table tbody td {
+  padding: 12px;
+  border-bottom: 1px solid #3b3b5c;
+  font-weight: 400;
+  color: #e0e0e0;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* --------------------------------------------------
+   GRID SYSTEM (simple bootstrap-like)
+-------------------------------------------------- */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.col-6 {
+  width: 50%;
+  padding: 10px;
+}
+
+.col-sm-12 {
+  width: 100%;
+}
+
+.col-lg-4 {
+  width: 33.33%;
+  padding: 10px;
+}
+
+.col-lg-6 {
+  width: 50%;
+  padding: 10px;
+}
+
+/* Responsive behavior */
+@media (max-width: 992px) {
+  .col-lg-4,
+  .col-lg-6 {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .col-6 {
+    width: 100%;
+  }
+}
