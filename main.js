@@ -110,13 +110,10 @@ demo = {
 
 
     // --------------------------------------------------------
-    // 1. BIG BAR CHART - Alerts by Department
+    // 3. BLUE BAR CHART - Alerts by Department
     // --------------------------------------------------------
     let mainBarCtx = document.getElementById("mainBarChart").getContext("2d");
-    let gradientStroke = mainBarCtx.createLinearGradient(0, 230, 0, 50);
-    gradientStroke.addColorStop(1, 'rgba(29,140,248,0.2)');
-    gradientStroke.addColorStop(0.4, 'rgba(29,140,248,0.0)');
-    gradientStroke.addColorStop(0, 'rgba(29,140,248,0)');
+    let gradientStroke = createOrangeGradient(mainBarCtx);
 
     new Chart(mainBarCtx, {
       type: "bar",
@@ -125,7 +122,7 @@ demo = {
         datasets: [{
           label: "Alerts",
           backgroundColor: gradientStroke,
-          borderColor: "#007bff",
+          borderColor: "#f96332",
           borderWidth: 2,
           data: [8, 7, 7, 7, 7]
         }]
@@ -134,7 +131,7 @@ demo = {
     });
 
     // --------------------------------------------------------
-    // 2. MULTICOLOR PIE CHART #1 - Severity
+    // 4. MULTICOLOR PIE CHART #1 - Severity
     // --------------------------------------------------------
     let severityCtx = document.getElementById("severityChart").getContext("2d");
 
@@ -145,7 +142,7 @@ demo = {
         datasets: [{
           backgroundColor: [
             "#dc3535b3",
-            "#fd7d1467",
+            "#fd7d14a7",
             "#007bff66",
             "#28a7466e"
           ],
@@ -162,7 +159,7 @@ demo = {
     });
 
     // --------------------------------------------------------
-    // 3. BLUE PIE CHART #2 – Status
+    // 5. B PIE CHART #2 – Status
     // --------------------------------------------------------
     let statusCtx = document.getElementById("statusChart").getContext("2d");
 
@@ -190,11 +187,9 @@ demo = {
 
 
     // --------------------------------------------------------
-    // 4. ORANGE PIE CHART – Asset Types
+    // 6. ORANGE BAR CHART – Asset Types
     // --------------------------------------------------------
     let assetCtx = document.getElementById("assetChart").getContext("2d");
-    
-    // REVERTING to original Orange Bar Chart
     let assetGradient = createOrangeGradient(assetCtx);
 
     new Chart(assetCtx, {
@@ -204,7 +199,7 @@ demo = {
         datasets: [{
           label: "Assets",
           backgroundColor: assetGradient,
-          borderColor: assetGradient,
+          borderColor: "#f96332",
           borderWidth: 2,
           data: [2, 1, 2, 1]
         }]
@@ -221,12 +216,6 @@ demo = {
 // --------------------------------------------------------
 // HELPER FUNCTION - GRADIENTS
 // --------------------------------------------------------
-function createOrangeGradient(ctx) {
-  let gradient = ctx.createLinearGradient(0, 0, 0, 200);
-  gradient.addColorStop(0, 'rgba(254, 106, 0, 1)');
-  gradient.addColorStop(1, 'rgba(254, 106, 0, 0.2)');
-  return gradient;
-}
 
 function createBlueGradient(ctx) {
   let gradient = ctx.createLinearGradient(0, 0, 0, 200);
