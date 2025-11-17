@@ -1,6 +1,6 @@
 UserID,User,Department,RiskScore,#Alerts,LoginFailuresLast30d,RiskyActionsLast30d,SecurityTrainingCompleted
-U001,Alice,Finance,90,8,10,3,False
-U002,Bob,Engineering,75,7,4,2,True
-U003,Carla,Sales,68,7,6,1,True
-U004,Dinesh,IT,80,7,9,4,False
-U005,Emma,HR,40,7,2,0,True
+U001,Alice Jones,Finance,90,8,10,3,False
+U002,Bob Harrison,Engineering,75,7,4,2,True
+U003,Carla Smith,Sales,68,7,6,1,True
+U004,Dinesh Raja,IT,80,7,9,4,False
+U005,Emma Lee,HR,40,7,2,0,True
