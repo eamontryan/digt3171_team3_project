@@ -50,6 +50,65 @@ demo = {
       }
     };
 
+    // ORANGE GRADIENT
+    function createOrangeGradient(ctx) {
+      const gradient = ctx.createLinearGradient(0, 230, 0, 50);
+      gradient.addColorStop(1, "rgba(249, 99, 59, 0.15)");
+      gradient.addColorStop(0.4, "rgba(249, 99, 59, 0.0)");
+      gradient.addColorStop(0, "rgba(249, 99, 59, 0)");
+      return gradient;
+    }
+
+    // -----------------------------
+    // 1. ORANGE LINE CHART (Alerts)
+    // -----------------------------
+    let alertCtx = document.getElementById("alertChart").getContext("2d");
+    let alertGradient = createOrangeGradient(alertCtx);
+
+    new Chart(alertCtx, {
+      type: "line",
+      data: {
+        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+        datasets: [{
+          label: "Alerts",
+          fill: true,
+          backgroundColor: alertGradient,
+          borderColor: "#f96332",
+          borderWidth: 2,
+          pointBackgroundColor: "#f96332",
+          pointBorderColor: "rgba(255,255,255,0)",
+          pointRadius: 4,
+          data: [30, 50, 45, 60, 55, 48, 70, 65, 80, 75, 90, 85]
+        }]
+      },
+      options: gradientBarChartConfiguration
+    });
+
+    // --------------------------------------------------------
+    // 2. ORANGE BAR CHART – Vulnerability types
+    // --------------------------------------------------------
+    let vulCtx = document.getElementById("vulChart").getContext("2d");
+    let vulGradient = createOrangeGradient(vulCtx);
+
+    new Chart(vulCtx, {
+      type: "bar",
+      data: {
+        labels: [
+          "RCE", "XSS", "SQLi", "CSRF", "LFI", "RFI", "Auth Bypass",
+          "Misconfig", "Info Leak", "Deserialization", "DoS", "Other"
+        ],
+        datasets: [{
+          label: "Vulnerabilities",
+          backgroundColor: vulGradient,
+          borderColor: "#f96332",
+          borderWidth: 2,
+          data: [12, 9, 7, 5, 4, 3, 6, 10, 8, 2, 11, 9]
+        }]
+      },
+      options: gradientBarChartConfiguration
+    });
+
+
     // --------------------------------------------------------
     // 1. BIG BAR CHART - Alerts by Department
     // --------------------------------------------------------
@@ -65,7 +124,7 @@ demo = {
         labels: ["Finance", "Engineering", "Sales", "IT", "HR"],
         datasets: [{
           label: "Alerts",
-          backgroundColor: "#007bff",
+          backgroundColor: gradientStroke,
           borderColor: "#007bff",
           borderWidth: 2,
           data: [8, 7, 7, 7, 7]
@@ -75,7 +134,7 @@ demo = {
     });
 
     // --------------------------------------------------------
-    // 2. BLUE PIE CHART #1 - Severity
+    // 2. MULTICOLOR PIE CHART #1 - Severity
     // --------------------------------------------------------
     let severityCtx = document.getElementById("severityChart").getContext("2d");
 
@@ -85,12 +144,12 @@ demo = {
         labels: ["Critical", "High", "Medium", "Low"],
         datasets: [{
           backgroundColor: [
-            "#dc3545",
-            "#fd7e14",
-            "#007bff",
-            "#28a745"
+            "#dc3535b3",
+            "#fd7d1467",
+            "#007bff66",
+            "#28a7466e"
           ],
-          borderColor: "#27293d",
+          borderColor: "#e47c05ff",
           borderWidth: 2,
           data: [50, 25, 15, 10]
         }]
