@@ -258,75 +258,23 @@ demo = {
     // Load alerts data and create chart
     loadAlertsChart(alertCtx, alertGradient, gradientBarChartConfiguration);
 
-    // 2) Vuln type bar chart
+    // 2) Vuln type bar chart - will be loaded dynamically
     let vulCtx = document.getElementById("vulChart").getContext("2d");
     let vulGradient = createOrangeGradient(vulCtx);
+    loadVulnerabilityTypesChart(vulCtx, vulGradient, gradientBarChartConfiguration);
 
-    new Chart(vulCtx, {
-      type: "bar",
-      data: {
-        labels: ["RCE","XSS","SQLi","CSRF","LFI","RFI","Auth Bypass","Misconfig","Info Leak","Deserialization","DoS","Other"],
-        datasets: [{
-          label: "Vulnerabilities",
-          backgroundColor: vulGradient,
-          borderColor: "#f96332",
-          borderWidth: 2,
-          data: [12, 9, 7, 5, 4, 3, 6, 10, 8, 2, 11, 9]
-        }]
-      },
-      options: gradientBarChartConfiguration
-    });
-
-    // 3) Alerts by department
+    // 3) Alerts by department - will be loaded dynamically
     let mainBarCtx = document.getElementById("mainBarChart").getContext("2d");
     let gradientStroke = createOrangeGradient(mainBarCtx);
+    loadAlertsByDepartmentChart(mainBarCtx, gradientStroke, gradientBarChartConfiguration);
 
-    new Chart(mainBarCtx, {
-      type: "bar",
-      data: {
-        labels: ["Finance","Engineering","Sales","IT","HR"],
-        datasets: [{
-          label: "Alerts",
-          backgroundColor: gradientStroke,
-          borderColor: "#f96332",
-          borderWidth: 2,
-          data: [8, 7, 7, 7, 7]
-        }]
-      },
-      options: gradientBarChartConfiguration
-    });
-
-    // 4) Severity pie
+    // 4) Severity pie - will be loaded dynamically
     let severityCtx = document.getElementById("severityChart").getContext("2d");
-    new Chart(severityCtx, {
-      type: "pie",
-      data: {
-        labels: ["High","Medium","Low"],
-        datasets: [{
-          backgroundColor: ["#dc3535b3","#fd7d14a7","#007bff66","#28a7466e"],
-          borderColor: "#e47c05ff",
-          borderWidth: 2,
-          data: [50,25,25]
-        }]
-      },
-      options: { maintainAspectRatio: false, cutoutPercentage: 55, legend: { display: false } }
-    });
+    loadSeverityChart(severityCtx);
 
-    // 5) Status pie
+    // 5) Status pie - will be loaded dynamically
     let statusCtx = document.getElementById("statusChart").getContext("2d");
-    new Chart(statusCtx, {
-      type: "pie",
-      data: {
-        labels: ["Open","Pending","Closed"],
-        datasets: [{
-          backgroundColor: ["rgba(254, 106, 0, 1)","rgba(254, 106, 0, 0.41)","rgba(254, 106, 0, 0.14)"],
-          borderColor: "#f96332",
-          borderWidth: 2,
-          data: [40,25,20]
-        }]
-      },
-      options: { maintainAspectRatio: false, cutoutPercentage: 55, legend: { display: false } }
-    });
+    loadStatusChart(statusCtx);
 
     // 6) Asset types chart (will be updated from real data)
     let assetCtx = document.getElementById("assetChart").getContext("2d");
@@ -350,9 +298,68 @@ demo = {
     // Load tables + wire sorting
     loadVulnerabilityData();
     loadAssetInventory();
+    loadHighRiskUsers();
     wireUpSortButtons();
   }
 };
+
+// ----------------------------
+// LOAD HIGH RISK USERS TABLE
+// ----------------------------
+async function loadHighRiskUsers() {
+  try {
+    const [usersRes, alertsRes] = await Promise.all([
+      fetch('users.csv'),
+      fetch('alerts.csv')
+    ]);
+
+    if (!usersRes.ok) throw new Error('users.csv not found');
+    if (!alertsRes.ok) throw new Error('alerts.csv not found');
+
+    const users = parseCSV(await usersRes.text());
+    const alerts = parseCSV(await alertsRes.text());
+
+    // Count alerts per user
+    const userAlertCounts = new Map();
+    for (const alert of alerts) {
+      const userId = alert.UserID;
+      userAlertCounts.set(userId, (userAlertCounts.get(userId) || 0) + 1);
+    }
+
+    // Build user data with actual alert counts
+    const userData = users.map(user => ({
+      name: user.User || 'Unknown',
+      department: user.Department || 'Unknown',
+      training: user.SecurityTrainingCompleted || 'False',
+      alerts: userAlertCounts.get(user.UserID) || 0,
+      riskScore: parseInt(user.RiskScore) || 0
+    }));
+
+    // Sort by risk score descending
+    userData.sort((a, b) => b.riskScore - a.riskScore);
+
+    // Render table
+    const tbody = document.getElementById('users-table-body');
+    if (!tbody) return;
+
+    let html = '';
+    for (const user of userData) {
+      html += `
+        <tr>
+          <td>${user.name}</td>
+          <td>${user.department}</td>
+          <td class="text-center">${user.training}</td>
+          <td class="text-center">${user.alerts}</td>
+          <td class="text-center">${user.riskScore}</td>
+        </tr>
+      `;
+    }
+    tbody.innerHTML = html;
+
+  } catch (error) {
+    console.error('Error loading high risk users:', error);
+  }
+}
 
 // ----------------------------
 // Update Asset Type chart based on alerts grouped by asset type
@@ -426,6 +433,200 @@ async function loadAssetInventory() {
 
   } catch (err) {
     console.error('Error loading asset inventory:', err);
+  }
+}
+
+// --------------------------------------------------------
+// LOAD SEVERITY PIE CHART
+// --------------------------------------------------------
+async function loadSeverityChart(ctx) {
+  try {
+    const response = await fetch('alerts.csv');
+    if (!response.ok) throw new Error('alerts.csv not found');
+
+    const data = parseCSV(await response.text());
+
+    // Count by severity
+    const severityCounts = {};
+    for (const alert of data) {
+      const severity = alert.Severity || 'Unknown';
+      severityCounts[severity] = (severityCounts[severity] || 0) + 1;
+    }
+
+    // Sort by severity rank
+    const severityOrder = ['Critical', 'High', 'Medium', 'Low'];
+    const labels = [];
+    const counts = [];
+
+    for (const sev of severityOrder) {
+      if (severityCounts[sev]) {
+        labels.push(sev);
+        counts.push(severityCounts[sev]);
+      }
+    }
+
+    new Chart(ctx, {
+      type: "pie",
+      data: {
+        labels: labels,
+        datasets: [{
+          backgroundColor: ["#dc3535b3","#fd7d14a7","#007bff66","#28a7466e"],
+          borderColor: "#e47c05ff",
+          borderWidth: 2,
+          data: counts
+        }]
+      },
+      options: { maintainAspectRatio: false, cutoutPercentage: 55, legend: { display: false } }
+    });
+  } catch (error) {
+    console.error('Error loading severity chart:', error);
+  }
+}
+
+// --------------------------------------------------------
+// LOAD STATUS PIE CHART
+// --------------------------------------------------------
+async function loadStatusChart(ctx) {
+  try {
+    const response = await fetch('alerts.csv');
+    if (!response.ok) throw new Error('alerts.csv not found');
+
+    const data = parseCSV(await response.text());
+
+    // Count by status
+    const statusCounts = {};
+    for (const alert of data) {
+      const status = alert.Status || 'Unknown';
+      statusCounts[status] = (statusCounts[status] || 0) + 1;
+    }
+
+    const labels = Object.keys(statusCounts);
+    const counts = labels.map(l => statusCounts[l]);
+
+    new Chart(ctx, {
+      type: "pie",
+      data: {
+        labels: labels,
+        datasets: [{
+          backgroundColor: ["rgba(254, 106, 0, 1)","rgba(254, 106, 0, 0.41)","rgba(254, 106, 0, 0.14)"],
+          borderColor: "#f96332",
+          borderWidth: 2,
+          data: counts
+        }]
+      },
+      options: { maintainAspectRatio: false, cutoutPercentage: 55, legend: { display: false } }
+    });
+  } catch (error) {
+    console.error('Error loading status chart:', error);
+  }
+}
+
+// --------------------------------------------------------
+// LOAD ALERTS BY DEPARTMENT CHART
+// --------------------------------------------------------
+async function loadAlertsByDepartmentChart(ctx, gradient, chartConfig) {
+  try {
+    const [usersRes, alertsRes] = await Promise.all([
+      fetch('users.csv'),
+      fetch('alerts.csv')
+    ]);
+
+    if (!usersRes.ok) throw new Error('users.csv not found');
+    if (!alertsRes.ok) throw new Error('alerts.csv not found');
+
+    const users = parseCSV(await usersRes.text());
+    const alerts = parseCSV(await alertsRes.text());
+
+    // Map UserID to Department
+    const userToDept = new Map();
+    for (const user of users) {
+      userToDept.set(user.UserID, user.Department);
+    }
+
+    // Count alerts by department
+    const deptCounts = {};
+    for (const alert of alerts) {
+      const dept = userToDept.get(alert.UserID) || 'Unknown';
+      deptCounts[dept] = (deptCounts[dept] || 0) + 1;
+    }
+
+    const labels = Object.keys(deptCounts);
+    const counts = labels.map(l => deptCounts[l]);
+
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Alerts",
+          backgroundColor: gradient,
+          borderColor: "#f96332",
+          borderWidth: 2,
+          data: counts
+        }]
+      },
+      options: chartConfig
+    });
+  } catch (error) {
+    console.error('Error loading alerts by department chart:', error);
+  }
+}
+
+// --------------------------------------------------------
+// LOAD VULNERABILITY TYPES CHART
+// --------------------------------------------------------
+async function loadVulnerabilityTypesChart(ctx, gradient, chartConfig) {
+  try {
+    const [vulnRes, alertsRes] = await Promise.all([
+      fetch('vulnerabilities.csv'),
+      fetch('alerts.csv')
+    ]);
+
+    if (!vulnRes.ok) throw new Error('vulnerabilities.csv not found');
+    if (!alertsRes.ok) throw new Error('alerts.csv not found');
+
+    const vulns = parseCSV(await vulnRes.text());
+    const alerts = parseCSV(await alertsRes.text());
+
+    // Count alerts per vulnerability
+    const vulnCounts = new Map();
+    for (const alert of alerts) {
+      const vulnId = alert.VulnID;
+      vulnCounts.set(vulnId, (vulnCounts.get(vulnId) || 0) + 1);
+    }
+
+    // Get vulnerability names and their counts
+    const vulnData = [];
+    for (const vuln of vulns) {
+      const count = vulnCounts.get(vuln.VulnID) || 0;
+      vulnData.push({
+        name: vuln.Name || vuln.CVE || 'Unknown',
+        count: count
+      });
+    }
+
+    // Sort by count descending
+    vulnData.sort((a, b) => b.count - a.count);
+
+    const labels = vulnData.map(v => v.name);
+    const counts = vulnData.map(v => v.count);
+
+    new Chart(ctx, {
+      type: "bar",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Vulnerabilities",
+          backgroundColor: gradient,
+          borderColor: "#f96332",
+          borderWidth: 2,
+          data: counts
+        }]
+      },
+      options: chartConfig
+    });
+  } catch (error) {
+    console.error('Error loading vulnerability types chart:', error);
   }
 }
 
