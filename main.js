@@ -65,24 +65,8 @@ demo = {
     let alertCtx = document.getElementById("alertChart").getContext("2d");
     let alertGradient = createOrangeGradient(alertCtx);
 
-    new Chart(alertCtx, {
-      type: "line",
-      data: {
-        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-        datasets: [{
-          label: "Alerts",
-          fill: true,
-          backgroundColor: alertGradient,
-          borderColor: "#f96332",
-          borderWidth: 2,
-          pointBackgroundColor: "#f96332",
-          pointBorderColor: "rgba(255,255,255,0)",
-          pointRadius: 4,
-          data: [30, 50, 45, 60, 55, 48, 70, 65, 80, 75, 90, 85]
-        }]
-      },
-      options: gradientBarChartConfiguration
-    });
+    // Load alerts data and create chart
+    loadAlertsChart(alertCtx, alertGradient, gradientBarChartConfiguration);
 
     // --------------------------------------------------------
     // 2. ORANGE BAR CHART – Vulnerability types
@@ -262,6 +246,76 @@ function getSeverityClass(severity) {
     case 'medium': return 'text-info'; // Uses 'info' class (blue)
     case 'low': return 'text-success'; // Uses 'success' class (green)
     default: return '';
+  }
+}
+
+// --------------------------------------------------------
+// NEW FUNCTION - LOAD ALERTS CHART
+// Fetches data from alerts.csv and creates the chart
+// --------------------------------------------------------
+async function loadAlertsChart(ctx, gradient, chartConfig) {
+  try {
+    const response = await fetch('alerts.csv');
+    if (!response.ok) {
+      throw new Error(`Network response was not ok: ${response.statusText}`);
+    }
+    const csvText = await response.text();
+    const data = parseCSV(csvText);
+
+    // Count alerts per month
+    const monthlyCounts = {};
+    for (const alert of data) {
+      const month = alert.Month;
+      if (month) {
+        monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
+      }
+    }
+
+    // Create array for all 12 months
+    const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+    const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const alertData = months.map(month => monthlyCounts[month] || 0);
+
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: monthLabels,
+        datasets: [{
+          label: "Alerts",
+          fill: true,
+          backgroundColor: gradient,
+          borderColor: "#f96332",
+          borderWidth: 2,
+          pointBackgroundColor: "#f96332",
+          pointBorderColor: "rgba(255,255,255,0)",
+          pointRadius: 4,
+          data: alertData
+        }]
+      },
+      options: chartConfig
+    });
+
+  } catch (error) {
+    console.error('Error loading alerts data:', error);
+    // Fallback to default data
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+        datasets: [{
+          label: "Alerts",
+          fill: true,
+          backgroundColor: gradient,
+          borderColor: "#f96332",
+          borderWidth: 2,
+          pointBackgroundColor: "#f96332",
+          pointBorderColor: "rgba(255,255,255,0)",
+          pointRadius: 4,
+          data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        }]
+      },
+      options: chartConfig
+    });
   }
 }
 
