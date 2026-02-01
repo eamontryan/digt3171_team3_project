@@ -69,29 +69,29 @@
           <div class="row">
 
             <!-- Overview Charts -->
-             <div class="col-12 col-sm-12">
-            <div class="card card-chart">
-              <div class="card-header">
-                <h5 class="card-category">Alert Tracker</h5>
-                <h2 class="card-title">Alerts</h2>
-              </div>
-              <div class="card-body">
-                <div class="chart-area"><canvas id="alertChart"></canvas></div>
+            <div class="col-12 col-sm-12">
+              <div class="card card-chart">
+                <div class="card-header">
+                  <h5 class="card-category">Alert Tracker</h5>
+                  <h2 class="card-title">Alerts</h2>
+                </div>
+                <div class="card-body">
+                  <div class="chart-area"><canvas id="alertChart"></canvas></div>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="col-lg-6 col-sm-12">
-            <div class="card card-chart">
-              <div class="card-header">
-                <h5 class="card-category">Vulnerability Tracker</h5>
-                <h2 class="card-title">Vulnerability Types</h2>
-              </div>
-              <div class="card-body">
-                <div class="chart-area"><canvas id="vulChart"></canvas></div>
+            <div class="col-lg-6 col-sm-12">
+              <div class="card card-chart">
+                <div class="card-header">
+                  <h5 class="card-category">Vulnerability Tracker</h5>
+                  <h2 class="card-title">Vulnerability Types</h2>
+                </div>
+                <div class="card-body">
+                  <div class="chart-area"><canvas id="vulChart"></canvas></div>
+                </div>
               </div>
             </div>
-          </div>
 
             <div class="col-lg-6 col-sm-12">
               <div class="card card-chart">
@@ -106,6 +106,7 @@
                 </div>
               </div>
             </div>
+
           </div>
         </section>
 
@@ -161,7 +162,6 @@
           </div>
         </section>
 
-
         <!-- Section 3: Tables -->
         <section id="tables">
           <div class="row">
@@ -174,14 +174,29 @@
                 </div>
                 <div class="card-body">
                   <div class="table-responsive">
-                    <table class="table tablesorter">
+                    <table id="users-table" class="table tablesorter">
                       <thead class="text-primary">
                         <tr>
-                          <th>Name</th>
-                          <th>Department</th>
-                          <th>Security Training Completion</th>
-                          <th class="text-center"># of Alerts</th>
-                          <th class="text-center">Risk Score</th>
+                          <th>
+                            Name
+                            <button class="sort-btn" data-table="users" data-col="0" data-type="string" title="Sort Name">⇅</button>
+                          </th>
+                          <th>
+                            Department
+                            <button class="sort-btn" data-table="users" data-col="1" data-type="string" title="Sort Department">⇅</button>
+                          </th>
+                          <th>
+                            Security Training Completion
+                            <button class="sort-btn" data-table="users" data-col="2" data-type="bool" title="Sort Training Completion">⇅</button>
+                          </th>
+                          <th class="text-center">
+                            # of Alerts
+                            <button class="sort-btn" data-table="users" data-col="3" data-type="number" title="Sort Alerts">⇅</button>
+                          </th>
+                          <th class="text-center">
+                            Risk Score
+                            <button class="sort-btn" data-table="users" data-col="4" data-type="number" title="Sort Risk Score">⇅</button>
+                          </th>
                         </tr>
                       </thead>
                       <tbody class="text-center">
@@ -205,22 +220,85 @@
                 </div>
                 <div class="card-body">
                   <div class="table-responsive">
-                    <table class="table tablesorter">
+
+                    <!-- Added id="vuln-table" (optional, but nice for debugging) -->
+                    <table class="table tablesorter" id="vuln-table">
                       <thead class="text-primary">
                         <tr>
-                          <th>CVE</th><th>Name</th><th>Severity</th><th class="text-center"># of Alerts</th>
+                          <th>
+                            CVE
+                            <!-- key must match TABLE_STATE.vuln normalized fields -->
+                            <button class="sort-btn" data-table="vuln" data-key="cve" data-type="text" title="Sort CVE">⇅</button>
+                          </th>
+                          <th>
+                            Name
+                            <button class="sort-btn" data-table="vuln" data-key="name" data-type="text" title="Sort Name">⇅</button>
+                          </th>
+                          <th>
+                            Severity
+                            <button class="sort-btn" data-table="vuln" data-key="severity" data-type="severity" title="Sort Severity">⇅</button>
+                          </th>
+                          <th class="text-center">
+                            # of Alerts
+                            <button class="sort-btn" data-table="vuln" data-key="alerts" data-type="number" title="Sort Alerts">⇅</button>
+                          </th>
                         </tr>
                       </thead>
-                      <!-- 
-                        UPDATED: 
-                        Removed the static, hard-coded table rows.
-                        Added id="vulnerability-table-body" to the <tbody> tag
-                        so main.js can target it and insert the data dynamically.
-                      -->
+
+                      <!-- main.js fills this dynamically -->
                       <tbody id="vulnerability-table-body" class="text-center">
                         <!-- Data will be loaded here by main.js -->
                       </tbody>
                     </table>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Asset Inventory -->
+            <div class="col-12 col-sm-12">
+              <div class="card">
+                <div class="card-header">
+                  <h4 class="card-title">Asset Inventory</h4>
+                </div>
+                <div class="card-body">
+                  <div class="table-responsive">
+
+                    <!-- Added id="asset-table" (optional, but nice for debugging) -->
+                    <table class="table tablesorter" id="asset-table">
+                      <thead class="text-primary">
+                        <tr>
+                          <th>
+                            Asset ID
+                            <!-- key must match TABLE_STATE.asset normalized fields -->
+                            <button class="sort-btn" data-table="asset" data-key="assetId" data-type="text" title="Sort Asset ID">⇅</button>
+                          </th>
+                          <th>
+                            Asset Name
+                            <button class="sort-btn" data-table="asset" data-key="assetName" data-type="text" title="Sort Asset Name">⇅</button>
+                          </th>
+                          <th>
+                            Asset Type
+                            <button class="sort-btn" data-table="asset" data-key="assetType" data-type="text" title="Sort Asset Type">⇅</button>
+                          </th>
+                          <th class="text-center">
+                            # of Alerts
+                            <button class="sort-btn" data-table="asset" data-key="alerts" data-type="number" title="Sort Alerts">⇅</button>
+                          </th>
+                          <th class="text-center">
+                            Highest Severity
+                            <button class="sort-btn" data-table="asset" data-key="highestSeverity" data-type="severity" title="Sort Severity">⇅</button>
+                          </th>
+                        </tr>
+                      </thead>
+
+                      <tbody id="asset-table-body" class="text-center">
+                        <!-- Data will be loaded here by main.js -->
+                      </tbody>
+
+                    </table>
+
                   </div>
                 </div>
               </div>
@@ -231,6 +309,20 @@
 
       </div>
 
+    </div>
+  </div>
+
+  <!-- CVE DETAILS MODAL -->
+  <div id="cve-modal" class="modal-hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h4 id="cve-modal-title">CVE Details</h4>
+        <button id="cve-modal-close" class="modal-close">×</button>
+      </div>
+
+      <div id="cve-modal-content" class="modal-content">
+        <!-- Filled by main.js -->
+      </div>
     </div>
   </div>
 
