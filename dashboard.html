@@ -55,6 +55,9 @@
           <div class="navbar-wrapper">
             <a class="navbar-brand" href="javascript:void(0)">Dashboard Overview</a>
           </div>
+          <div class="navbar-actions">
+            <button class="btn btn-primary" id="alertSimulationBtn">Alert Simulation</button>
+          </div>
         </div>
       </nav>
 
@@ -228,6 +231,20 @@
 
       </div>
 
+    </div>
+  </div>
+
+  <!-- Alert Simulation Modal -->
+  <div id="alertSimulationModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Alert Simulation</h2>
+      <p>Enter your email address to receive a simulated security alert:</p>
+      <div class="modal-form">
+        <input type="email" id="alertEmail" placeholder="your-email@example.com" required />
+        <button class="btn btn-primary" id="triggerAlertBtn">Trigger Alert</button>
+      </div>
+      <div id="alertMessage" class="alert-message"></div>
     </div>
   </div>
 

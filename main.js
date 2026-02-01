@@ -313,6 +313,102 @@ async function loadVulnerabilityData() {
 }
 
 
+// --------------------------------------------------------
+// ALERT SIMULATION MODAL FUNCTIONALITY
+// --------------------------------------------------------
+
+// Modal functionality
+const modal = document.getElementById('alertSimulationModal');
+const btn = document.getElementById('alertSimulationBtn');
+const span = document.getElementsByClassName('close')[0];
+const triggerAlertBtn = document.getElementById('triggerAlertBtn');
+const alertMessage = document.getElementById('alertMessage');
+const alertEmailInput = document.getElementById('alertEmail');
+
+// Open modal
+if (btn) {
+  btn.onclick = function() {
+    modal.style.display = 'block';
+    alertMessage.className = 'alert-message';
+    alertMessage.textContent = '';
+    alertEmailInput.value = '';
+  }
+}
+
+// Close modal
+if (span) {
+  span.onclick = function() {
+    modal.style.display = 'none';
+  }
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = 'none';
+  }
+}
+
+// Trigger alert
+if (triggerAlertBtn) {
+  triggerAlertBtn.onclick = async function() {
+    const email = alertEmailInput.value.trim();
+
+    if (!email) {
+      alertMessage.className = 'alert-message error';
+      alertMessage.textContent = 'Please enter a valid email address.';
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alertMessage.className = 'alert-message error';
+      alertMessage.textContent = 'Please enter a valid email address.';
+      return;
+    }
+
+    // Disable button during request
+    triggerAlertBtn.disabled = true;
+    triggerAlertBtn.textContent = 'Creating Alert...';
+    alertMessage.className = 'alert-message';
+    alertMessage.textContent = '';
+
+    try {
+      const response = await fetch('http://localhost:3000/api/simulate-alert', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: email })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alertMessage.className = 'alert-message success';
+        alertMessage.textContent = `Alert ${data.alert.AlertID} created successfully! Check your email.`;
+        alertEmailInput.value = '';
+
+        // Close modal after 3 seconds
+        setTimeout(() => {
+          modal.style.display = 'none';
+        }, 3000);
+      } else {
+        alertMessage.className = 'alert-message error';
+        alertMessage.textContent = `Error: ${data.error || 'Failed to create alert'}`;
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alertMessage.className = 'alert-message error';
+      alertMessage.textContent = 'Error connecting to server. Make sure the backend is running on port 3000.';
+    } finally {
+      triggerAlertBtn.disabled = false;
+      triggerAlertBtn.textContent = 'Trigger Alert';
+    }
+  }
+}
+
 // Initialize charts on document ready
 $(document).ready(function() {
   demo.initDashboardPageCharts();
