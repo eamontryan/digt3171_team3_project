@@ -49,8 +49,23 @@ function getLastAlert() {
   return alerts[alerts.length - 1];
 }
 
+// Function to get CVE from VulnID
+function getCVEFromVulnID(vulnID) {
+  try {
+    const vulnContent = fs.readFileSync(path.join(__dirname, 'vulnerabilities.csv'), 'utf-8');
+    const vulns = parseCSV(vulnContent);
+    const vuln = vulns.find(v => v.VulnID === vulnID);
+    return vuln ? vuln.CVE : vulnID;
+  } catch (error) {
+    console.error('Error reading vulnerabilities.csv:', error);
+    return vulnID;
+  }
+}
+
 // Function to send email alert
 async function sendAlertEmail(alertData, recipientEmail) {
+  const cve = getCVEFromVulnID(alertData.VulnID);
+
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: recipientEmail,
@@ -64,7 +79,7 @@ async function sendAlertEmail(alertData, recipientEmail) {
         <tr><th>Status</th><td>${alertData.Status}</td></tr>
         <tr><th>Asset ID</th><td>${alertData.AssetID}</td></tr>
         <tr><th>User ID</th><td>${alertData.UserID}</td></tr>
-        <tr><th>Vulnerability ID</th><td>${alertData.VulnID}</td></tr>
+        <tr><th>CVE</th><td>${cve}</td></tr>
         <tr><th>Alert Source</th><td>${alertData.AlertSource}</td></tr>
       </table>
     `

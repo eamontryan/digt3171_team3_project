@@ -327,16 +327,20 @@
   </div>
 
   <!-- Alert Simulation Modal -->
-  <div id="alertSimulationModal" class="modal">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <h2>Alert Simulation</h2>
-      <p>Enter your email address to receive a simulated security alert:</p>
-      <div class="modal-form">
-        <input type="email" id="alertEmail" placeholder="your-email@example.com" required />
-        <button class="btn btn-primary" id="triggerAlertBtn">Trigger Alert</button>
+  <div id="alertSimulationModal" class="modal-hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h4>Alert Simulation</h4>
+        <button id="alertModalClose" class="modal-close">×</button>
       </div>
-      <div id="alertMessage" class="alert-message"></div>
+      <div class="modal-content">
+        <p>Enter your email address to receive a simulated security alert:</p>
+        <div class="modal-form">
+          <input type="email" id="alertEmail" placeholder="your-email@example.com" required />
+          <button class="btn btn-primary" id="triggerAlertBtn">Trigger Alert</button>
+        </div>
+        <div id="alertMessage" class="alert-message"></div>
+      </div>
     </div>
   </div>
 

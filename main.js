@@ -430,76 +430,6 @@ async function loadAssetInventory() {
 }
 
 // --------------------------------------------------------
-// NEW FUNCTION - LOAD ALERTS CHART
-// Fetches data from alerts.csv and creates the chart
-// --------------------------------------------------------
-async function loadAlertsChart(ctx, gradient, chartConfig) {
-  try {
-    const response = await fetch('alerts.csv');
-    if (!response.ok) {
-      throw new Error(`Network response was not ok: ${response.statusText}`);
-    }
-    const csvText = await response.text();
-    const data = parseCSV(csvText);
-
-    // Count alerts per month
-    const monthlyCounts = {};
-    for (const alert of data) {
-      const month = alert.Month;
-      if (month) {
-        monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
-      }
-    }
-
-    // Create array for all 12 months
-    const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
-    const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const alertData = months.map(month => monthlyCounts[month] || 0);
-
-    new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: monthLabels,
-        datasets: [{
-          label: "Alerts",
-          fill: true,
-          backgroundColor: gradient,
-          borderColor: "#f96332",
-          borderWidth: 2,
-          pointBackgroundColor: "#f96332",
-          pointBorderColor: "rgba(255,255,255,0)",
-          pointRadius: 4,
-          data: alertData
-        }]
-      },
-      options: chartConfig
-    });
-
-  } catch (error) {
-    console.error('Error loading alerts data:', error);
-    // Fallback to default data
-    new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
-        datasets: [{
-          label: "Alerts",
-          fill: true,
-          backgroundColor: gradient,
-          borderColor: "#f96332",
-          borderWidth: 2,
-          pointBackgroundColor: "#f96332",
-          pointBorderColor: "rgba(255,255,255,0)",
-          pointRadius: 4,
-          data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        }]
-      },
-      options: chartConfig
-    });
-  }
-}
-
-// --------------------------------------------------------
 // Fetches data from alerts.csv and creates the chart
 // --------------------------------------------------------
 async function loadAlertsChart(ctx, gradient, chartConfig) {
@@ -754,7 +684,106 @@ function sortUsersTable(colIndex, type) {
   rows.forEach(r => tbody.appendChild(r));
 }
 
+// ----------------------------
+// ALERT SIMULATION MODAL
+// ----------------------------
+function setupAlertSimulationModal() {
+  const modal = document.getElementById('alertSimulationModal');
+  const btn = document.getElementById('alertSimulationBtn');
+  const closeBtn = document.getElementById('alertModalClose');
+  const triggerAlertBtn = document.getElementById('triggerAlertBtn');
+  const alertMessage = document.getElementById('alertMessage');
+  const alertEmailInput = document.getElementById('alertEmail');
+
+  if (!modal || !btn) return;
+
+  function openModal() {
+    modal.classList.remove('modal-hidden');
+    modal.classList.add('modal-visible');
+    alertMessage.className = 'alert-message';
+    alertMessage.textContent = '';
+    alertEmailInput.value = '';
+  }
+
+  function closeModal() {
+    modal.classList.add('modal-hidden');
+    modal.classList.remove('modal-visible');
+  }
+
+  // Open modal
+  btn.onclick = openModal;
+
+  // Close modal
+  if (closeBtn) closeBtn.onclick = closeModal;
+
+  // Close when clicking outside
+  modal.onclick = (e) => {
+    if (e.target === modal) closeModal();
+  };
+
+  // Trigger alert
+  if (triggerAlertBtn) {
+    triggerAlertBtn.onclick = async function() {
+      const email = alertEmailInput.value.trim();
+
+      if (!email) {
+        alertMessage.className = 'alert-message error';
+        alertMessage.textContent = 'Please enter a valid email address.';
+        return;
+      }
+
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        alertMessage.className = 'alert-message error';
+        alertMessage.textContent = 'Please enter a valid email address.';
+        return;
+      }
+
+      // Disable button during request
+      triggerAlertBtn.disabled = true;
+      triggerAlertBtn.textContent = 'Creating Alert...';
+      alertMessage.className = 'alert-message';
+      alertMessage.textContent = '';
+
+      try {
+        const response = await fetch('http://localhost:3000/api/simulate-alert', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email: email })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alertMessage.className = 'alert-message success';
+          alertMessage.textContent = `Alert ${data.alert.AlertID} created successfully! Check your email.`;
+          alertEmailInput.value = '';
+
+          // Close modal after 3 seconds
+          setTimeout(() => {
+            closeModal();
+          }, 3000);
+        } else {
+          alertMessage.className = 'alert-message error';
+          alertMessage.textContent = `Error: ${data.error || 'Failed to create alert'}`;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alertMessage.className = 'alert-message error';
+        alertMessage.textContent = 'Error connecting to server. Make sure the backend is running on port 3000.';
+      } finally {
+        triggerAlertBtn.disabled = false;
+        triggerAlertBtn.textContent = 'Trigger Alert';
+      }
+    };
+  }
+}
+
 // Initialize charts on document ready
 $(document).ready(function() {
   demo.initDashboardPageCharts();
+  setupAlertSimulationModal();
 });
