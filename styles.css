@@ -238,6 +238,104 @@ p {
   text-align: center;
 }
 
+.table tbody tr.vuln-row:hover {
+  cursor: pointer;
+  background: rgba(255,127,17,0.12);
+}
+
+/* Severity colouring */
+.text-danger {
+  color: #ff4d4f; /* Critical - red */
+  font-weight: 600;
+}
+
+.text-warning {
+  color: #ff9f1c; /* High - orange */
+  font-weight: 600;
+}
+
+.text-info {
+  color: #ffd43b; /* Medium - yellow */
+  font-weight: 600;
+}
+
+.text-success {
+  color: #4dabf7; /* Low - blue */
+  font-weight: 600;
+}
+
+.table tbody td.text-danger,
+.table tbody td.text-warning,
+.table tbody td.text-info,
+.table tbody td.text-success {
+  letter-spacing: 0.3px;
+}
+
+/* Force severity colours inside tables (override default td color) */
+.table tbody td.text-danger {
+  color: #ff4d4f;
+}
+
+.table tbody td.text-warning {
+  color: #ff9f1c;
+}
+
+.table tbody td.text-info {
+  color: #ffd43b;
+}
+
+.table tbody td.text-success {
+  color: #4dabf7;
+}
+
+/* --------------------------------------------------
+   TABLE SORT BUTTONS (tiny header arrows)
+-------------------------------------------------- */
+.table thead th {
+  position: relative;            /* lets the button sit nicely in the corner */
+  padding-right: 34px;           /* space for the sort button */
+}
+
+/* the small ⇅ button */
+.sort-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,127,17,0.35);
+  background: rgba(255,127,17,0.10);
+  color: #ff7f11;
+
+  font-size: 12px;
+  line-height: 20px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.sort-btn:hover {
+  background: rgba(255,127,17,0.18);
+  border-color: rgba(255,127,17,0.6);
+}
+
+/* optional: show which direction is active */
+.sort-btn.is-asc::after {
+  content: "▲";
+  margin-left: 2px;
+  font-size: 10px;
+  color: #fff;
+}
+
+.sort-btn.is-desc::after {
+  content: "▼";
+  margin-left: 2px;
+  font-size: 10px;
+  color: #fff;
+}
+
 /* --------------------------------------------------
    GRID SYSTEM (simple bootstrap-like)
 -------------------------------------------------- */
@@ -278,4 +376,52 @@ p {
   .col-6 {
     width: 100%;
   }
+}
+
+/* ----------------------------
+   MODAL (CVE DETAILS)
+---------------------------- */
+.modal-hidden {
+  display: none;
+}
+
+.modal-visible {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+
+.modal-card {
+  width: min(900px, 92vw);
+  max-height: 85vh;
+  overflow: auto;
+  background: #27293d;
+  border-radius: 12px;
+  box-shadow: 0 5px 18px rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.modal-content {
+  padding: 18px;
+  color: #e0e0e0;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 26px;
+  cursor: pointer;
 }
