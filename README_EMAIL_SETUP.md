@@ -71,7 +71,7 @@ In a new terminal run:
 ```
 python -m http.server 8000
 ```
-Open `http://localhost:8000/dashboard.html` in your browser. You should see an "Alert Simulation" button in the navbar.
+Open `http://localhost:8000` in your browser. You should see an "Alert Simulation" button in the navbar.
 
 ## Usage
 
