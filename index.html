@@ -11,7 +11,7 @@
   <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
 
   <!-- CSS -->
-  <link href="styles.css" rel="stylesheet" />
+  <link href="styles.css?v=2" rel="stylesheet" />
 </head>
 
 <body class="">
@@ -62,6 +62,7 @@
           </div>
           <div class="navbar-actions">
             <button class="btn btn-primary" id="alertSimulationBtn">Alert Simulation</button>
+            <button class="btn btn-warning" id="behaviorSimulationBtn" style="margin-left: 10px;">User Behavior</button>
           </div>
         </div>
       </nav>
@@ -184,23 +185,28 @@
                         <tr>
                           <th>
                             Name
-                            <button class="sort-btn" data-table="users" data-col="0" data-type="string" title="Sort Name">⇅</button>
+                            <button class="sort-btn" data-table="users" data-col="0" data-type="string"
+                              title="Sort Name">⇅</button>
                           </th>
                           <th>
                             Department
-                            <button class="sort-btn" data-table="users" data-col="1" data-type="string" title="Sort Department">⇅</button>
+                            <button class="sort-btn" data-table="users" data-col="1" data-type="string"
+                              title="Sort Department">⇅</button>
                           </th>
                           <th>
                             Security Training Completion
-                            <button class="sort-btn" data-table="users" data-col="2" data-type="bool" title="Sort Training Completion">⇅</button>
+                            <button class="sort-btn" data-table="users" data-col="2" data-type="bool"
+                              title="Sort Training Completion">⇅</button>
                           </th>
                           <th class="text-center">
                             # of Alerts
-                            <button class="sort-btn" data-table="users" data-col="3" data-type="number" title="Sort Alerts">⇅</button>
+                            <button class="sort-btn" data-table="users" data-col="3" data-type="number"
+                              title="Sort Alerts">⇅</button>
                           </th>
                           <th class="text-center">
                             Risk Score
-                            <button class="sort-btn" data-table="users" data-col="4" data-type="number" title="Sort Risk Score">⇅</button>
+                            <button class="sort-btn" data-table="users" data-col="4" data-type="number"
+                              title="Sort Risk Score">⇅</button>
                           </th>
                         </tr>
                       </thead>
@@ -229,19 +235,23 @@
                           <th>
                             CVE
                             <!-- key must match TABLE_STATE.vuln normalized fields -->
-                            <button class="sort-btn" data-table="vuln" data-key="cve" data-type="text" title="Sort CVE">⇅</button>
+                            <button class="sort-btn" data-table="vuln" data-key="cve" data-type="text"
+                              title="Sort CVE">⇅</button>
                           </th>
                           <th>
                             Name
-                            <button class="sort-btn" data-table="vuln" data-key="name" data-type="text" title="Sort Name">⇅</button>
+                            <button class="sort-btn" data-table="vuln" data-key="name" data-type="text"
+                              title="Sort Name">⇅</button>
                           </th>
                           <th>
                             Severity
-                            <button class="sort-btn" data-table="vuln" data-key="severity" data-type="severity" title="Sort Severity">⇅</button>
+                            <button class="sort-btn" data-table="vuln" data-key="severity" data-type="severity"
+                              title="Sort Severity">⇅</button>
                           </th>
                           <th class="text-center">
                             # of Alerts
-                            <button class="sort-btn" data-table="vuln" data-key="alerts" data-type="number" title="Sort Alerts">⇅</button>
+                            <button class="sort-btn" data-table="vuln" data-key="alerts" data-type="number"
+                              title="Sort Alerts">⇅</button>
                           </th>
                         </tr>
                       </thead>
@@ -273,23 +283,28 @@
                           <th>
                             Asset ID
                             <!-- key must match TABLE_STATE.asset normalized fields -->
-                            <button class="sort-btn" data-table="asset" data-key="assetId" data-type="text" title="Sort Asset ID">⇅</button>
+                            <button class="sort-btn" data-table="asset" data-key="assetId" data-type="text"
+                              title="Sort Asset ID">⇅</button>
                           </th>
                           <th>
                             Asset Name
-                            <button class="sort-btn" data-table="asset" data-key="assetName" data-type="text" title="Sort Asset Name">⇅</button>
+                            <button class="sort-btn" data-table="asset" data-key="assetName" data-type="text"
+                              title="Sort Asset Name">⇅</button>
                           </th>
                           <th>
                             Asset Type
-                            <button class="sort-btn" data-table="asset" data-key="assetType" data-type="text" title="Sort Asset Type">⇅</button>
+                            <button class="sort-btn" data-table="asset" data-key="assetType" data-type="text"
+                              title="Sort Asset Type">⇅</button>
                           </th>
                           <th class="text-center">
                             # of Alerts
-                            <button class="sort-btn" data-table="asset" data-key="alerts" data-type="number" title="Sort Alerts">⇅</button>
+                            <button class="sort-btn" data-table="asset" data-key="alerts" data-type="number"
+                              title="Sort Alerts">⇅</button>
                           </th>
                           <th class="text-center">
                             Highest Severity
-                            <button class="sort-btn" data-table="asset" data-key="highestSeverity" data-type="severity" title="Sort Severity">⇅</button>
+                            <button class="sort-btn" data-table="asset" data-key="highestSeverity" data-type="severity"
+                              title="Sort Severity">⇅</button>
                           </th>
                         </tr>
                       </thead>
@@ -345,10 +360,44 @@
     </div>
   </div>
 
+  <!-- User Behavior Simulation Modal -->
+  <div id="behaviorSimulationModal" class="modal-hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h4>User Behavior Simulation</h4>
+        <button id="behaviorModalClose" class="modal-close">×</button>
+      </div>
+      <div class="modal-content">
+        <p>Simulate a risky user behavior:</p>
+        <div class="modal-form">
+          <label style="display:block; text-align:left; margin-bottom:5px;">User:</label>
+          <select id="behaviorUserSelect"
+            style="width:100%; padding:8px; margin-bottom: 15px; border-radius:4px; border:1px solid #ddd;">
+            <!-- Populated by main.js -->
+          </select>
+
+          <label style="display:block; text-align:left; margin-bottom:5px;">Behavior:</label>
+          <select id="behaviorTypeSelect"
+            style="width:100%; padding:8px; margin-bottom: 20px; border-radius:4px; border:1px solid #ddd;">
+            <option value="FailedLogin" data-risk="5">Failed Login Attempt (Risk: 5)</option>
+            <option value="SensitiveAccess" data-risk="15">Sensitive Data Access (Risk: 15)</option>
+            <option value="PolicyViolation" data-risk="25">Security Policy Violation (Risk: 25)</option>
+            <option value="UnusualLocation" data-risk="10">Login from Unusual Location (Risk: 10)</option>
+            <option value="SuspiciousDownload" data-risk="20">Suspicious File Download (Risk: 20)</option>
+          </select>
+
+          <button class="btn btn-warning" id="triggerBehaviorBtn" style="width:100%;">Log Behavior</button>
+        </div>
+        <div id="behaviorMessage" class="alert-message" style="margin-top:15px;"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- SCRIPTS -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
   <script src="main.js"></script>
 
 </body>
+
 </html>

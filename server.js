@@ -21,6 +21,8 @@ const transporter = nodemailer.createTransport({
 
 // Path to alerts.csv
 const ALERTS_CSV_PATH = path.join(__dirname, 'alerts.csv');
+const USER_BEHAVIORS_CSV_PATH = path.join(__dirname, 'user_behaviors.csv');
+const USERS_CSV_PATH = path.join(__dirname, 'users.csv');
 
 // Function to parse CSV
 function parseCSV(content) {
@@ -94,6 +96,143 @@ async function sendAlertEmail(alertData, recipientEmail) {
     return { success: false, error: error.message };
   }
 }
+
+// Function to write CSV
+function writeCSV(filePath, data, headers) {
+  const headerLine = headers.join(',');
+  const lines = [headerLine];
+  data.forEach(row => {
+    const values = headers.map(header => row[header]);
+    lines.push(values.join(','));
+  });
+  fs.writeFileSync(filePath, lines.join('\n'));
+}
+
+// Function to calculate risk score
+function calculateRiskScore(user, alerts, behaviors) {
+  let score = 0;
+
+  // 1. Alert based score
+  const userAlerts = alerts.filter(a => a.UserID === user.UserID);
+  userAlerts.forEach(alert => {
+    switch (alert.Severity) {
+      case 'Critical': score += 20; break;
+      case 'High': score += 10; break;
+      case 'Medium': score += 5; break;
+      case 'Low': score += 2; break;
+    }
+  });
+
+  // 2. Training based score
+  if (user.SecurityTrainingCompleted === 'False') {
+    score += 20;
+  }
+
+  // 3. Behavior based score
+  const userBehaviors = behaviors.filter(b => b.UserID === user.UserID);
+  userBehaviors.forEach(b => {
+    score += parseInt(b.RiskImpact) || 0;
+  });
+
+  // Cap at 100
+  return Math.min(score, 100);
+}
+
+// Function to update user risk score
+function updateUserRiskScore(userId) {
+  try {
+    const usersContent = fs.readFileSync(USERS_CSV_PATH, 'utf-8');
+    const users = parseCSV(usersContent);
+
+    const alertsContent = fs.readFileSync(ALERTS_CSV_PATH, 'utf-8');
+    const alerts = parseCSV(alertsContent);
+
+    let behaviors = [];
+    try {
+      if (fs.existsSync(USER_BEHAVIORS_CSV_PATH)) {
+        const behaviorsContent = fs.readFileSync(USER_BEHAVIORS_CSV_PATH, 'utf-8');
+        behaviors = parseCSV(behaviorsContent);
+      }
+    } catch (e) {
+      console.warn('Could not read user_behaviors.csv, assuming empty', e);
+    }
+
+    const userIndex = users.findIndex(u => u.UserID === userId);
+    if (userIndex !== -1) {
+      const newScore = calculateRiskScore(users[userIndex], alerts, behaviors);
+      users[userIndex].RiskScore = newScore;
+
+      // Write back to users.csv
+      if (users.length > 0) {
+        const headers = Object.keys(users[0]);
+        writeCSV(USERS_CSV_PATH, users, headers);
+      }
+      return newScore;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error updating risk score:', error);
+    return null;
+  }
+}
+
+// Status check endpoint
+app.get('/api/status', (req, res) => {
+  res.json({ status: 'ok', server: 'node-backend' });
+});
+
+// API endpoint to log user behavior
+// Helper to generate next Alert ID
+function generateNextAlertID() {
+  try {
+    const content = fs.readFileSync(ALERTS_CSV_PATH, 'utf-8');
+    const alerts = parseCSV(content);
+    const lastAlertNum = alerts.length > 0 ? parseInt(alerts[alerts.length - 1].AlertID.split('-')[1]) : 0;
+    const newAlertNum = lastAlertNum + 1;
+    return `ALERT-${String(newAlertNum).padStart(3, '0')}`;
+  } catch (e) {
+    return 'ALERT-001';
+  }
+}
+
+// API endpoint to log user behavior
+app.post('/api/log-behavior', (req, res) => {
+  console.log('Received log-behavior request body:', req.body);
+  const { userId, behaviorType, riskImpact } = req.body;
+
+  if (!userId || !behaviorType) {
+    return res.status(400).json({ success: false, error: 'Missing required fields' });
+  }
+
+  try {
+    const risk = parseInt(riskImpact) || 0;
+    let severity = 'Low';
+    if (risk >= 20) severity = 'Critical';
+    else if (risk >= 10) severity = 'High';
+    else if (risk >= 5) severity = 'Medium';
+
+    const alertID = generateNextAlertID();
+    const today = new Date();
+    const date = today.toISOString().split('T')[0];
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+
+    // Assign random asset for simulation context
+    const assetIDs = ['AST-001', 'AST-002', 'AST-003', 'AST-004', 'AST-005'];
+    const assetID = assetIDs[Math.floor(Math.random() * assetIDs.length)];
+
+    // CSV Format: AlertID,Date,Month,Severity,Status,AssetID,UserID,VulnID,AlertSource
+    const newRow = `${alertID},${date},${month},${severity},Open,${assetID},${userId},VULN-000,UserBehaviour\n`;
+
+    fs.appendFileSync(ALERTS_CSV_PATH, newRow);
+
+    const newScore = updateUserRiskScore(userId);
+
+    res.json({ success: true, newRiskScore: newScore });
+  } catch (error) {
+    console.error('Error logging behavior:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // API endpoint to trigger alert simulation
 app.post('/api/simulate-alert', async (req, res) => {

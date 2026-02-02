@@ -524,10 +524,24 @@ p {
   color: #fff;
 }
 
+/* --------------------------------------------------
+   MODAL
+-------------------------------------------------- */
 .btn-primary:hover {
   background: #e67010;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(255, 127, 17, 0.3);
+}
+
+.btn-warning {
+  background: #ff9f1c;
+  color: #fff;
+}
+
+.btn-warning:hover {
+  background: #e68e19;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(255, 159, 28, 0.3);
 }
 
 /* --------------------------------------------------

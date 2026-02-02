@@ -167,7 +167,7 @@ function wireUpSortButtons() {
       const tableName = btn.getAttribute('data-table'); // "vuln" or "asset"
       const key = btn.getAttribute('data-key');         // normalized key
       const type = btn.getAttribute('data-type');       // text/number/severity
-      
+
       // ------------------------------------
       // STATIC TABLE: High Risk Users
       // ------------------------------------
@@ -208,7 +208,7 @@ function wireUpSortButtons() {
 // CHARTS (your existing demo init)
 // ----------------------------
 demo = {
-  initDashboardPageCharts: function() {
+  initDashboardPageCharts: function () {
     gradientBarChartConfiguration = {
       maintainAspectRatio: false,
       legend: { display: false },
@@ -283,7 +283,7 @@ demo = {
     assetTypeChart = new Chart(assetCtx, {
       type: "bar",
       data: {
-        labels: ["Workstation","Server","Cloud","Networking"],
+        labels: ["Workstation", "Server", "Cloud", "Networking"],
         datasets: [{
           label: "Assets",
           backgroundColor: assetGradient,
@@ -309,8 +309,8 @@ demo = {
 async function loadHighRiskUsers() {
   try {
     const [usersRes, alertsRes] = await Promise.all([
-      fetch('users.csv'),
-      fetch('alerts.csv')
+      fetch('users.csv?t=' + Date.now()),
+      fetch('alerts.csv?t=' + Date.now())
     ]);
 
     if (!usersRes.ok) throw new Error('users.csv not found');
@@ -390,8 +390,8 @@ function updateAssetTypeChartFromData(assets, alerts) {
 async function loadAssetInventory() {
   try {
     const [assetsRes, alertsRes] = await Promise.all([
-      fetch('assets.csv'),
-      fetch('alerts.csv')
+      fetch('assets.csv?t=' + Date.now()),
+      fetch('alerts.csv?t=' + Date.now())
     ]);
 
     if (!assetsRes.ok) throw new Error("assets.csv not found");
@@ -441,7 +441,7 @@ async function loadAssetInventory() {
 // --------------------------------------------------------
 async function loadSeverityChart(ctx) {
   try {
-    const response = await fetch('alerts.csv');
+    const response = await fetch('alerts.csv?t=' + Date.now());
     if (!response.ok) throw new Error('alerts.csv not found');
 
     const data = parseCSV(await response.text());
@@ -470,7 +470,7 @@ async function loadSeverityChart(ctx) {
       data: {
         labels: labels,
         datasets: [{
-          backgroundColor: ["#dc3535b3","#fd7d14a7","#007bff66","#28a7466e"],
+          backgroundColor: ["#dc3535b3", "#fd7d14a7", "#007bff66", "#28a7466e"],
           borderColor: "#e47c05ff",
           borderWidth: 2,
           data: counts
@@ -488,7 +488,7 @@ async function loadSeverityChart(ctx) {
 // --------------------------------------------------------
 async function loadStatusChart(ctx) {
   try {
-    const response = await fetch('alerts.csv');
+    const response = await fetch('alerts.csv?t=' + Date.now());
     if (!response.ok) throw new Error('alerts.csv not found');
 
     const data = parseCSV(await response.text());
@@ -508,7 +508,7 @@ async function loadStatusChart(ctx) {
       data: {
         labels: labels,
         datasets: [{
-          backgroundColor: ["rgba(254, 106, 0, 1)","rgba(254, 106, 0, 0.41)","rgba(254, 106, 0, 0.14)"],
+          backgroundColor: ["rgba(254, 106, 0, 1)", "rgba(254, 106, 0, 0.41)", "rgba(254, 106, 0, 0.14)"],
           borderColor: "#f96332",
           borderWidth: 2,
           data: counts
@@ -527,8 +527,8 @@ async function loadStatusChart(ctx) {
 async function loadAlertsByDepartmentChart(ctx, gradient, chartConfig) {
   try {
     const [usersRes, alertsRes] = await Promise.all([
-      fetch('users.csv'),
-      fetch('alerts.csv')
+      fetch('users.csv?t=' + Date.now()),
+      fetch('alerts.csv?t=' + Date.now())
     ]);
 
     if (!usersRes.ok) throw new Error('users.csv not found');
@@ -578,8 +578,8 @@ async function loadAlertsByDepartmentChart(ctx, gradient, chartConfig) {
 async function loadVulnerabilityTypesChart(ctx, gradient, chartConfig) {
   try {
     const [vulnRes, alertsRes] = await Promise.all([
-      fetch('vulnerabilities.csv'),
-      fetch('alerts.csv')
+      fetch('vulnerabilities.csv?t=' + Date.now()),
+      fetch('alerts.csv?t=' + Date.now())
     ]);
 
     if (!vulnRes.ok) throw new Error('vulnerabilities.csv not found');
@@ -635,7 +635,7 @@ async function loadVulnerabilityTypesChart(ctx, gradient, chartConfig) {
 // --------------------------------------------------------
 async function loadAlertsChart(ctx, gradient, chartConfig) {
   try {
-    const response = await fetch('alerts.csv');
+    const response = await fetch('alerts.csv?t=' + Date.now());
     if (!response.ok) {
       throw new Error(`Network response was not ok: ${response.statusText}`);
     }
@@ -705,10 +705,10 @@ async function loadAlertsChart(ctx, gradient, chartConfig) {
 async function loadVulnerabilityData() {
   try {
     const [vulnRes, cveStatsRes, alertsRes, assetsRes] = await Promise.all([
-      fetch('vulnerabilities.csv'),
-      fetch('cve_stats.csv'),
-      fetch('alerts.csv'),
-      fetch('assets.csv')
+      fetch('vulnerabilities.csv?t=' + Date.now()),
+      fetch('cve_stats.csv?t=' + Date.now()),
+      fetch('alerts.csv?t=' + Date.now()),
+      fetch('assets.csv?t=' + Date.now())
     ]);
 
     if (!vulnRes.ok) throw new Error("vulnerabilities.csv not found");
@@ -924,7 +924,7 @@ function setupAlertSimulationModal() {
 
   // Trigger alert
   if (triggerAlertBtn) {
-    triggerAlertBtn.onclick = async function() {
+    triggerAlertBtn.onclick = async function () {
       const email = alertEmailInput.value.trim();
 
       if (!email) {
@@ -983,8 +983,108 @@ function setupAlertSimulationModal() {
   }
 }
 
+// ----------------------------
+// USER BEHAVIOR SIMULATION MODAL
+// ----------------------------
+function setupBehaviorSimulationModal() {
+  const modal = document.getElementById('behaviorSimulationModal');
+  const btn = document.getElementById('behaviorSimulationBtn');
+  const closeBtn = document.getElementById('behaviorModalClose');
+  const triggerBtn = document.getElementById('triggerBehaviorBtn');
+  const messageDiv = document.getElementById('behaviorMessage');
+  const userSelect = document.getElementById('behaviorUserSelect');
+  const typeSelect = document.getElementById('behaviorTypeSelect');
+
+  if (!modal || !btn) return;
+
+  async function populateUserSelect() {
+    try {
+      const response = await fetch('users.csv?t=' + Date.now());
+      const text = await response.text();
+      const users = parseCSV(text);
+
+      userSelect.innerHTML = '';
+      users.forEach(user => {
+        const option = document.createElement('option');
+        option.value = user.UserID;
+        option.textContent = `${user.User} (${user.Department})`;
+        userSelect.appendChild(option);
+      });
+    } catch (e) {
+      console.error('Error loading users for behavior modal:', e);
+      messageDiv.textContent = 'Error loading users.';
+      messageDiv.className = 'alert-message error';
+    }
+  }
+
+  function openModal() {
+    modal.classList.remove('modal-hidden');
+    modal.classList.add('modal-visible');
+    messageDiv.textContent = '';
+    messageDiv.className = 'alert-message';
+    // Populate users if empty
+    if (userSelect.options.length === 0) {
+      populateUserSelect();
+    }
+  }
+
+  function closeModal() {
+    modal.classList.add('modal-hidden');
+    modal.classList.remove('modal-visible');
+  }
+
+  btn.onclick = openModal;
+  if (closeBtn) closeBtn.onclick = closeModal;
+  modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+
+  if (triggerBtn) {
+    triggerBtn.onclick = async () => {
+      const userId = userSelect.value;
+      const behaviorOption = typeSelect.options[typeSelect.selectedIndex];
+      const behaviorType = behaviorOption.value;
+      const riskImpact = behaviorOption.getAttribute('data-risk');
+
+      if (!userId || !behaviorType) {
+        messageDiv.textContent = 'Please select a user and behavior.';
+        messageDiv.className = 'alert-message error';
+        return;
+      }
+
+      triggerBtn.disabled = true;
+      triggerBtn.textContent = 'Logging...';
+      messageDiv.textContent = '';
+
+      try {
+        const res = await fetch('http://localhost:3000/api/log-behavior', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, behaviorType, riskImpact })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          messageDiv.textContent = `Behavior logged! New Risk Score: ${data.newRiskScore}`;
+          messageDiv.className = 'alert-message success';
+          loadHighRiskUsers(); // Refresh table
+          setTimeout(closeModal, 2000);
+        } else {
+          throw new Error(data.error || 'Failed');
+        }
+      } catch (err) {
+        console.error(err);
+        messageDiv.textContent = 'Error logging behavior: ' + err.message;
+        messageDiv.className = 'alert-message error';
+      } finally {
+        triggerBtn.disabled = false;
+        triggerBtn.textContent = 'Log Behavior';
+      }
+    };
+  }
+}
+
 // Initialize charts on document ready
-$(document).ready(function() {
+$(document).ready(function () {
   demo.initDashboardPageCharts();
   setupAlertSimulationModal();
+  setupBehaviorSimulationModal();
 });
