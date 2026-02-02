@@ -112,30 +112,65 @@ function writeCSV(filePath, data, headers) {
 function calculateRiskScore(user, alerts, behaviors) {
   let score = 0;
 
-  // 1. Alert based score
+  // 1. Alert based score (LOWERED WEIGHTS)
   const userAlerts = alerts.filter(a => a.UserID === user.UserID);
   userAlerts.forEach(alert => {
     switch (alert.Severity) {
-      case 'Critical': score += 20; break;
-      case 'High': score += 10; break;
-      case 'Medium': score += 5; break;
-      case 'Low': score += 2; break;
+      case 'Critical': score += 10; break;
+      case 'High': score += 5; break;
+      case 'Medium': score += 2; break;
+      case 'Low': score += 1; break;
     }
   });
 
-  // 2. Training based score
+  // 2. Training based score (LOWERED WEIGHT)
   if (user.SecurityTrainingCompleted === 'False') {
-    score += 20;
+    score += 10;
   }
 
-  // 3. Behavior based score
+  // 3. Behavior based score (LOWERED WEIGHT: 50% of impact)
   const userBehaviors = behaviors.filter(b => b.UserID === user.UserID);
   userBehaviors.forEach(b => {
-    score += parseInt(b.RiskImpact) || 0;
+    score += Math.floor((parseInt(b.RiskImpact) || 0) / 2);
   });
 
   // Cap at 100
   return Math.min(score, 100);
+}
+
+// Function to recalculate ALL user scores on startup
+function recalculateAllUserRiskScores() {
+  try {
+    console.log('Recalculating all user risk scores...');
+    if (!fs.existsSync(USERS_CSV_PATH)) return;
+
+    const usersContent = fs.readFileSync(USERS_CSV_PATH, 'utf-8');
+    const users = parseCSV(usersContent);
+
+    let alerts = [];
+    if (fs.existsSync(ALERTS_CSV_PATH)) {
+      const alertsContent = fs.readFileSync(ALERTS_CSV_PATH, 'utf-8');
+      alerts = parseCSV(alertsContent);
+    }
+
+    let behaviors = [];
+    if (fs.existsSync(USER_BEHAVIORS_CSV_PATH)) {
+      const behaviorsContent = fs.readFileSync(USER_BEHAVIORS_CSV_PATH, 'utf-8');
+      behaviors = parseCSV(behaviorsContent);
+    }
+
+    users.forEach(user => {
+      user.RiskScore = calculateRiskScore(user, alerts, behaviors);
+    });
+
+    if (users.length > 0) {
+      const headers = Object.keys(users[0]);
+      writeCSV(USERS_CSV_PATH, users, headers);
+      console.log('Risk scores updated successfully.');
+    }
+  } catch (error) {
+    console.error('Error recalculating risk scores:', error);
+  }
 }
 
 // Function to update user risk score
@@ -338,4 +373,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Alert email server running on port ${PORT}`);
   console.log('Watching alerts.csv for changes...');
+  recalculateAllUserRiskScores();
 });
