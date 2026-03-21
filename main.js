@@ -1,5 +1,6 @@
 type = ['primary', 'info', 'success', 'warning', 'danger'];
 let assetTypeChart = null;
+let priorityBucketChart = null;
 
 // ----------------------------
 // GLOBAL STATE (so we can re-sort + re-render without re-fetching)
@@ -75,6 +76,23 @@ function getPriorityBucket(severity, assetTypes = []) {
   if (sev === 'medium') return 'P3 - Medium';
 
   return 'P4 - Low';
+}
+
+function getPriorityBucketCounts(rows) {
+  const counts = {
+    'P1 - Critical': 0,
+    'P2 - High': 0,
+    'P3 - Medium': 0,
+    'P4 - Low': 0
+  };
+
+  rows.forEach(v => {
+    if (counts[v.priorityBucket] !== undefined) {
+      counts[v.priorityBucket]++;
+    }
+  });
+
+  return counts;
 }
 
 // ----------------------------
@@ -226,6 +244,51 @@ function wireUpSortButtons() {
       if (tableName === 'vuln') renderVulnTable();
       if (tableName === 'asset') renderAssetTable();
     });
+  });
+}
+
+function renderPriorityBucketChart() {
+  const canvas = document.getElementById('priorityBucketChart');
+  if (!canvas) return;
+
+  const counts = getPriorityBucketCounts(TABLE_STATE.vuln.rows);
+
+  const labels = ['P1 - Critical', 'P2 - High', 'P3 - Medium', 'P4 - Low'];
+  const data = labels.map(label => counts[label]);
+
+  if (priorityBucketChart) {
+    priorityBucketChart.destroy();
+  }
+
+  priorityBucketChart = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: data,
+        backgroundColor: [
+          '#dc3535b3', // P1
+          '#fd7d14a7', // P2
+          '#007bff66', // P3
+          '#28a7466e'  // P4 
+        ],
+        borderColor: '#ff8d00',
+        borderWidth: 2
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      cutoutPercentage: 55,
+      legend: {
+        display: true,
+        position: 'bottom',
+        labels: {
+          fontColor: '#ffffff',
+          padding: 15,
+          usePointStyle: true
+        }
+      }
+    }
   });
 }
 
@@ -794,6 +857,7 @@ async function loadVulnerabilityData() {
     };
 
     renderVulnTable();
+    renderPriorityBucketChart();
 
   } catch (error) {
     console.error('Error loading vulnerability data:', error);
