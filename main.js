@@ -53,6 +53,30 @@ function pickHighestSeverity(severities) {
   return best || 'N/A';
 }
 
+function getPriorityBucket(severity, assetTypes = []) {
+  const sev = (severity || '').toLowerCase();
+
+  const normalizedAssetTypes = assetTypes.map(a => (a || '').toLowerCase());
+
+  const hasCriticalAsset =
+    normalizedAssetTypes.includes('server') ||
+    normalizedAssetTypes.includes('cloud') ||
+    normalizedAssetTypes.includes('networking') ||
+    normalizedAssetTypes.includes('database');
+
+  if (sev === 'critical') return 'P1 - Critical';
+
+  if (sev === 'high' && hasCriticalAsset) return 'P1 - Critical';
+
+  if (sev === 'high') return 'P2 - High';
+
+  if (sev === 'medium' && hasCriticalAsset) return 'P2 - High';
+
+  if (sev === 'medium') return 'P3 - Medium';
+
+  return 'P4 - Low';
+}
+
 // ----------------------------
 // CSV PARSER (simple)
 // ----------------------------
@@ -118,6 +142,7 @@ function renderVulnTable() {
       <tr class="vuln-row" data-vulnid="${v.vulnId}" data-cve="${v.cve}">
         <td>${v.cve || 'N/A'}</td>
         <td>${v.name || 'Unknown'}</td>
+        <td>${v.priorityBucket || 'N/A'}</td>
         <td class="${severityClass}">${v.severity || 'N/A'}</td>
         <td class="text-center">${v.alerts || 0}</td>
       </tr>
@@ -738,14 +763,27 @@ async function loadVulnerabilityData() {
       alertsByVuln.get(id).push(a);
     }
 
-    // Normalize vuln rows for sorting/re-render
-    TABLE_STATE.vuln.rows = vulns.map(v => ({
-      vulnId: (v.VulnID || '').trim(),
-      cve: v.CVE || 'N/A',
-      name: v.Name || 'Unknown',
-      severity: v.Severity || 'N/A',
-      alerts: Number(v['#Alerts'] || 0)
-    }));
+    // Build vulnerability rows and assign priority buckets
+    TABLE_STATE.vuln.rows = vulns.map(v => {
+      const vulnId = (v.VulnID || '').trim();
+      const relatedAlerts = alertsByVuln.get(vulnId) || [];
+
+      const assetTypes = relatedAlerts.map(alert => {
+        const assetId = (alert.AssetID || '').trim();
+        const asset = assetById.get(assetId);
+        return asset ? asset.AssetType : null;
+      }).filter(Boolean);
+
+      return {
+        vulnId,
+        cve: v.CVE || 'N/A',
+        name: v.Name || 'Unknown',
+        severity: v.Severity || 'N/A',
+        alerts: Number(v['#Alerts'] || 0),
+        assetTypes,
+        priorityBucket: getPriorityBucket(v.Severity, assetTypes)
+      };
+    });
 
     // store modal data so re-render can re-wire clicks
     TABLE_STATE.vuln.modalData = {
