@@ -1,0 +1,4 @@
+AdjustmentID,UserID,AdjustmentValue,Comment,Timestamp,AdjustedBy
+ADJ-001,U001,5,Department of Finance is at higher risk,2026-03-22T22:14:44.780Z,admin
+ADJ-002,U003,-5,2/11 alerts closed,2026-03-22T22:23:22.002Z,admin
+ADJ-003,U004,10,IT department has more privileged accounts,2026-03-22T22:24:09.244Z,admin

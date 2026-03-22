@@ -26,12 +26,13 @@ const ALERTS_CSV_PATH = path.join(__dirname, 'alerts.csv');
 const USER_BEHAVIORS_CSV_PATH = path.join(__dirname, 'user_behaviors.csv');
 const USERS_CSV_PATH = path.join(__dirname, 'users.csv');
 const AUTH_USERS_CSV_PATH = path.join(__dirname, 'auth_users.csv');
+const RISK_ADJUSTMENTS_CSV_PATH = path.join(__dirname, 'risk_adjustments.csv');
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-for-dev';
 
 // Function to parse CSV
 function parseCSV(content) {
   const lines = content.trim().split('\n');
-  const headers = lines[0].split(',');
+  const headers = lines[0].split(',').map(h => h.trim());
   const data = [];
 
   for (let i = 1; i < lines.length; i++) {
@@ -39,7 +40,7 @@ function parseCSV(content) {
       const values = lines[i].split(',');
       const row = {};
       headers.forEach((header, index) => {
-        row[header] = values[index];
+        row[header] = values[index] ? values[index].trim() : '';
       });
       data.push(row);
     }
@@ -113,7 +114,7 @@ function writeCSV(filePath, data, headers) {
 }
 
 // Function to calculate risk score
-function calculateRiskScore(user, alerts, behaviors) {
+function calculateRiskScore(user, alerts, behaviors, adjustments = []) {
   let score = 0;
 
   // 1. Alert based score (LOWERED WEIGHTS)
@@ -138,8 +139,14 @@ function calculateRiskScore(user, alerts, behaviors) {
     score += Math.floor((parseInt(b.RiskImpact) || 0) / 2);
   });
 
-  // Cap at 100
-  return Math.min(score, 100);
+  // 4. Manual risk adjustments
+  const userAdjustments = adjustments.filter(a => a.UserID === user.UserID);
+  userAdjustments.forEach(adj => {
+    score += parseInt(adj.AdjustmentValue) || 0;
+  });
+
+  // Cap at 100, floor at 0
+  return Math.max(0, Math.min(score, 100));
 }
 
 // Function to recalculate ALL user scores on startup
@@ -163,8 +170,14 @@ function recalculateAllUserRiskScores() {
       behaviors = parseCSV(behaviorsContent);
     }
 
+    let adjustments = [];
+    if (fs.existsSync(RISK_ADJUSTMENTS_CSV_PATH)) {
+      const adjustmentsContent = fs.readFileSync(RISK_ADJUSTMENTS_CSV_PATH, 'utf-8');
+      adjustments = parseCSV(adjustmentsContent);
+    }
+
     users.forEach(user => {
-      user.RiskScore = calculateRiskScore(user, alerts, behaviors);
+      user.RiskScore = calculateRiskScore(user, alerts, behaviors, adjustments);
     });
 
     if (users.length > 0) {
@@ -196,9 +209,19 @@ function updateUserRiskScore(userId) {
       console.warn('Could not read user_behaviors.csv, assuming empty', e);
     }
 
+    let adjustments = [];
+    try {
+      if (fs.existsSync(RISK_ADJUSTMENTS_CSV_PATH)) {
+        const adjustmentsContent = fs.readFileSync(RISK_ADJUSTMENTS_CSV_PATH, 'utf-8');
+        adjustments = parseCSV(adjustmentsContent);
+      }
+    } catch (e) {
+      console.warn('Could not read risk_adjustments.csv, assuming empty', e);
+    }
+
     const userIndex = users.findIndex(u => u.UserID === userId);
     if (userIndex !== -1) {
-      const newScore = calculateRiskScore(users[userIndex], alerts, behaviors);
+      const newScore = calculateRiskScore(users[userIndex], alerts, behaviors, adjustments);
       users[userIndex].RiskScore = newScore;
 
       // Write back to users.csv
@@ -327,6 +350,172 @@ app.post('/api/simulate-alert', async (req, res) => {
     });
   } catch (error) {
     console.error('Error simulating alert:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// API endpoint to get user detail with risk breakdown
+app.get('/api/user-detail/:userId', (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const usersContent = fs.readFileSync(USERS_CSV_PATH, 'utf-8');
+    const users = parseCSV(usersContent);
+    const user = users.find(u => u.UserID === userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    const alertsContent = fs.readFileSync(ALERTS_CSV_PATH, 'utf-8');
+    const allAlerts = parseCSV(alertsContent);
+    const userAlerts = allAlerts.filter(a => a.UserID === userId);
+
+    // Load vulnerabilities and assets for enrichment
+    let vulns = [];
+    try {
+      vulns = parseCSV(fs.readFileSync(path.join(__dirname, 'vulnerabilities.csv'), 'utf-8'));
+    } catch (e) {}
+    const vulnById = new Map();
+    for (const v of vulns) vulnById.set(v.VulnID, v);
+
+    let assets = [];
+    try {
+      assets = parseCSV(fs.readFileSync(path.join(__dirname, 'assets.csv'), 'utf-8'));
+    } catch (e) {}
+    const assetById = new Map();
+    for (const a of assets) assetById.set(a.AssetID, a);
+
+    // Enrich alerts
+    const enrichedAlerts = userAlerts.map(a => {
+      const vuln = vulnById.get(a.VulnID) || {};
+      const asset = assetById.get(a.AssetID) || {};
+      return {
+        AlertID: a.AlertID,
+        Date: a.Date,
+        Severity: a.Severity,
+        Status: a.Status,
+        AlertSource: a.AlertSource,
+        VulnName: vuln.Name || a.VulnID || 'N/A',
+        CVE: vuln.CVE || 'N/A',
+        AssetName: asset.AssetName || a.AssetID || 'N/A'
+      };
+    });
+
+    // Compute breakdown
+    let criticalCount = 0, highCount = 0, mediumCount = 0, lowCount = 0;
+    userAlerts.forEach(a => {
+      switch (a.Severity) {
+        case 'Critical': criticalCount++; break;
+        case 'High': highCount++; break;
+        case 'Medium': mediumCount++; break;
+        case 'Low': lowCount++; break;
+      }
+    });
+
+    const trainingPenalty = user.SecurityTrainingCompleted === 'False' ? 10 : 0;
+
+    let behaviorImpact = 0;
+    try {
+      if (fs.existsSync(USER_BEHAVIORS_CSV_PATH)) {
+        const behaviors = parseCSV(fs.readFileSync(USER_BEHAVIORS_CSV_PATH, 'utf-8'));
+        const userBehaviors = behaviors.filter(b => b.UserID === userId);
+        userBehaviors.forEach(b => {
+          behaviorImpact += Math.floor((parseInt(b.RiskImpact) || 0) / 2);
+        });
+      }
+    } catch (e) {}
+
+    let adjustments = [];
+    let manualAdjustment = 0;
+    try {
+      if (fs.existsSync(RISK_ADJUSTMENTS_CSV_PATH)) {
+        const allAdjustments = parseCSV(fs.readFileSync(RISK_ADJUSTMENTS_CSV_PATH, 'utf-8'));
+        adjustments = allAdjustments.filter(a => a.UserID === userId);
+        adjustments.forEach(a => {
+          manualAdjustment += parseInt(a.AdjustmentValue) || 0;
+        });
+      }
+    } catch (e) {}
+
+    const calculatedTotal = (criticalCount * 10) + (highCount * 5) + (mediumCount * 2) + (lowCount * 1) + trainingPenalty + behaviorImpact + manualAdjustment;
+    const finalScore = Math.max(0, Math.min(calculatedTotal, 100));
+
+    res.json({
+      user: {
+        UserID: user.UserID,
+        User: user.User,
+        Department: user.Department,
+        SecurityTrainingCompleted: user.SecurityTrainingCompleted,
+        RiskScore: finalScore
+      },
+      breakdown: {
+        criticalAlerts: { count: criticalCount, points: criticalCount * 10 },
+        highAlerts: { count: highCount, points: highCount * 5 },
+        mediumAlerts: { count: mediumCount, points: mediumCount * 2 },
+        lowAlerts: { count: lowCount, points: lowCount * 1 },
+        trainingPenalty,
+        behaviorImpact,
+        manualAdjustment,
+        calculatedTotal,
+        finalScore
+      },
+      alerts: enrichedAlerts,
+      adjustments
+    });
+  } catch (error) {
+    console.error('Error getting user detail:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// API endpoint to add manual risk adjustment
+app.post('/api/risk-adjustment', (req, res) => {
+  const { userId, adjustmentValue, comment } = req.body;
+
+  if (!userId || adjustmentValue === undefined || !comment) {
+    return res.status(400).json({ success: false, error: 'Missing required fields: userId, adjustmentValue, comment' });
+  }
+
+  const numValue = parseInt(adjustmentValue);
+  if (isNaN(numValue) || numValue === 0) {
+    return res.status(400).json({ success: false, error: 'adjustmentValue must be a non-zero number' });
+  }
+
+  // Verify user exists
+  const usersContent = fs.readFileSync(USERS_CSV_PATH, 'utf-8');
+  const users = parseCSV(usersContent);
+  if (!users.find(u => u.UserID === userId)) {
+    return res.status(404).json({ success: false, error: 'User not found' });
+  }
+
+  try {
+    // Initialize file if it doesn't exist
+    if (!fs.existsSync(RISK_ADJUSTMENTS_CSV_PATH)) {
+      fs.writeFileSync(RISK_ADJUSTMENTS_CSV_PATH, 'AdjustmentID,UserID,AdjustmentValue,Comment,Timestamp,AdjustedBy\n');
+    }
+
+    // Generate next adjustment ID
+    const existingContent = fs.readFileSync(RISK_ADJUSTMENTS_CSV_PATH, 'utf-8');
+    const existing = parseCSV(existingContent);
+    const nextNum = existing.length + 1;
+    const adjustmentId = `ADJ-${String(nextNum).padStart(3, '0')}`;
+
+    // Sanitize comment: remove commas and newlines to prevent CSV corruption
+    const sanitizedComment = comment.replace(/[,\n\r]/g, ' ').trim();
+
+    const timestamp = new Date().toISOString();
+    const adjustedBy = 'admin';
+
+    const newRow = `${adjustmentId},${userId},${numValue},${sanitizedComment},${timestamp},${adjustedBy}\n`;
+    fs.appendFileSync(RISK_ADJUSTMENTS_CSV_PATH, newRow);
+
+    // Recalculate user risk score
+    const newScore = updateUserRiskScore(userId);
+
+    res.json({ success: true, newRiskScore: newScore, adjustmentId });
+  } catch (error) {
+    console.error('Error adding risk adjustment:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

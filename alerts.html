@@ -78,63 +78,69 @@
       <div class="content">
 
         <!-- Search Section -->
-        <div class="row">
-          <div class="col-12">
-            <div class="card">
-              <div class="card-header">
-                <h4 class="card-title">Search Alerts</h4>
-              </div>
-              <div class="card-body">
-                <div class="search-container">
-                  <select id="searchField" class="search-select">
-                    <option value="AlertID">Alert ID</option>
-                    <option value="Date">Date</option>
-                    <option value="Severity">Severity</option>
-                    <option value="Status">Status</option>
-                    <option value="UserID">User ID</option>
-                  </select>
-                  <input type="text" id="searchInput" class="search-input" placeholder="Search alerts...">
-                  <button id="clearSearch" class="btn btn-secondary">Clear</button>
+        <section>
+          <div class="row">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <h5 class="card-category">Filter</h5>
+                  <h4 class="card-title">Search Alerts</h4>
+                </div>
+                <div class="card-body">
+                  <div class="search-container">
+                    <select id="searchField" class="search-select">
+                      <option value="AlertID">Alert ID</option>
+                      <option value="Date">Date</option>
+                      <option value="Severity">Severity</option>
+                      <option value="Status">Status</option>
+                      <option value="UserID">User ID</option>
+                    </select>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search alerts...">
+                    <button id="clearSearch" class="btn btn-secondary">Clear</button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
         <!-- Alerts Table -->
-        <div class="row">
-          <div class="col-12">
-            <div class="card">
-              <div class="card-header">
-                <h4 class="card-title">All Alerts <span id="alertCount" class="alert-count"></span></h4>
-              </div>
-              <div class="card-body">
-                <div class="table-responsive">
-                  <table class="table tablesorter" id="alerts-table">
-                    <thead class="text-primary">
-                      <tr>
-                        <th>Alert ID</th>
-                        <th>Date</th>
-                        <th>Severity</th>
-                        <th>Status</th>
-                        <th>Asset ID</th>
-                        <th>User ID</th>
-                        <th>CVE</th>
-                        <th>Alert Source</th>
-                      </tr>
-                    </thead>
-                    <tbody id="alerts-table-body" class="text-center">
-                      <!-- Data will be loaded here by alerts.js -->
-                    </tbody>
-                  </table>
+        <section>
+          <div class="row">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <h5 class="card-category">Overview</h5>
+                  <h4 class="card-title">All Alerts <span id="alertCount" class="alert-count"></span></h4>
                 </div>
-                <div id="noResults" class="no-results" style="display: none;">
-                  <p>No alerts found matching your search criteria.</p>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table tablesorter" id="alerts-table">
+                      <thead class="text-primary">
+                        <tr>
+                          <th>Alert ID</th>
+                          <th>Date</th>
+                          <th>Severity</th>
+                          <th>Status</th>
+                          <th>Asset ID</th>
+                          <th>User ID</th>
+                          <th>CVE</th>
+                          <th>Alert Source</th>
+                        </tr>
+                      </thead>
+                      <tbody id="alerts-table-body" class="text-center">
+                        <!-- Data will be loaded here by alerts.js -->
+                      </tbody>
+                    </table>
+                  </div>
+                  <div id="noResults" class="no-results" style="display: none;">
+                    <p>No alerts found matching your search criteria.</p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
       </div>
 
@@ -146,7 +152,7 @@
     <div class="modal-card">
       <div class="modal-header">
         <h4>Alert Simulation</h4>
-        <button id="alertModalClose" class="modal-close">×</button>
+        <button id="alertModalClose" class="modal-close">&times;</button>
       </div>
       <div class="modal-content">
         <p>Enter your email address to receive a simulated security alert:</p>
@@ -161,7 +167,7 @@
 
   <!-- SCRIPTS -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="alerts.js"></script>
+  <script src="alerts.js?v=3"></script>
 
 </body>
 </html>

@@ -18,7 +18,7 @@
   <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
 
   <!-- CSS -->
-  <link href="styles.css?v=2" rel="stylesheet" />
+  <link href="styles.css?v=3" rel="stylesheet" />
 </head>
 
 <body class="">
@@ -423,10 +423,22 @@
     </div>
   </div>
 
+  <!-- User Detail Modal -->
+  <div id="user-detail-modal" class="modal-hidden">
+    <div class="modal-card" style="width: min(900px, 92vw);">
+      <div class="modal-header">
+        <h4 id="user-detail-modal-title">User Details</h4>
+        <button id="user-detail-modal-close" class="modal-close">&times;</button>
+      </div>
+      <div id="user-detail-modal-content" class="modal-content">
+      </div>
+    </div>
+  </div>
+
   <!-- SCRIPTS -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
-  <script src="main.js"></script>
+  <script src="main.js?v=3"></script>
 
 </body>
 

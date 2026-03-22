@@ -464,6 +464,7 @@ async function loadHighRiskUsers() {
  
     // Build user data with actual alert counts
     const userData = users.map(user => ({
+      userId: user.UserID,
       name: user.User || 'Unknown',
       department: user.Department || 'Unknown',
       training: user.SecurityTrainingCompleted || 'False',
@@ -480,17 +481,21 @@ async function loadHighRiskUsers() {
  
     let html = '';
     for (const user of userData) {
+      const scoreClass = user.riskScore >= 80 ? 'text-danger' : user.riskScore >= 60 ? 'text-warning' : user.riskScore >= 30 ? 'text-info' : 'text-success';
       html += `
-        <tr>
+        <tr class="user-row" data-userid="${user.userId}" style="cursor:pointer;" title="Click for details">
           <td>${user.name}</td>
           <td>${user.department}</td>
           <td class="text-center">${user.training}</td>
           <td class="text-center">${user.alerts}</td>
-          <td class="text-center">${user.riskScore}</td>
+          <td class="text-center ${scoreClass}">${user.riskScore}</td>
         </tr>
       `;
     }
     tbody.innerHTML = html;
+
+    // Wire up user detail modal after rendering
+    wireUpUserDetailModal();
  
   } catch (error) {
     console.error('Error loading high risk users:', error);
@@ -1318,6 +1323,255 @@ function setupBehaviorSimulationModal() {
   }
 }
  
+// ----------------------------
+// USER DETAIL MODAL
+// ----------------------------
+function wireUpUserDetailModal() {
+  const modal = document.getElementById('user-detail-modal');
+  const title = document.getElementById('user-detail-modal-title');
+  const content = document.getElementById('user-detail-modal-content');
+  const closeBtn = document.getElementById('user-detail-modal-close');
+
+  if (!modal || !title || !content || !closeBtn) return;
+
+  function open() {
+    modal.classList.remove('modal-hidden');
+    modal.classList.add('modal-visible');
+  }
+
+  function close() {
+    modal.classList.add('modal-hidden');
+    modal.classList.remove('modal-visible');
+  }
+
+  closeBtn.onclick = close;
+  modal.onclick = (e) => { if (e.target === modal) close(); };
+
+  document.querySelectorAll('.user-row').forEach(row => {
+    row.addEventListener('click', async () => {
+      const userId = row.getAttribute('data-userid');
+      if (!userId) return;
+
+      content.innerHTML = '<p style="text-align:center; color: var(--text-dim);">Loading...</p>';
+      title.textContent = 'User Details';
+      open();
+
+      try {
+        const res = await fetch(`http://localhost:3000/api/user-detail/${userId}`);
+        const data = await res.json();
+
+        title.textContent = `${data.user.User} — Risk Profile`;
+        content.innerHTML = buildUserDetailHTML(data);
+        wireUpAdjustmentForm(userId, data, close);
+      } catch (err) {
+        console.error('Error loading user detail:', err);
+        content.innerHTML = '<p class="text-danger">Error loading user details. Make sure the backend is running.</p>';
+      }
+    });
+  });
+}
+
+function buildUserDetailHTML(data) {
+  const { user, breakdown, alerts, adjustments } = data;
+  const b = breakdown;
+
+  // Risk score color
+  const scoreColor = b.finalScore >= 80 ? '#ff4560' : b.finalScore >= 60 ? '#ff9f1c' : b.finalScore >= 30 ? '#ffd43b' : '#00e5a0';
+  const barWidth = Math.min(b.finalScore, 100);
+
+  // User Info
+  let html = `
+    <div style="display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 20px;">
+      <div style="flex: 1; min-width: 200px;">
+        <h5 style="margin-bottom: 12px;">User Information</h5>
+        <p><b>Name:</b> ${user.User}</p>
+        <p><b>Department:</b> ${user.Department}</p>
+        <p><b>Security Training:</b> <span class="${user.SecurityTrainingCompleted === 'True' ? 'text-success' : 'text-danger'}">${user.SecurityTrainingCompleted}</span></p>
+      </div>
+      <div style="flex: 1; min-width: 200px;">
+        <h5 style="margin-bottom: 12px;">Risk Score</h5>
+        <div style="font-size: 36px; font-weight: 700; color: ${scoreColor}; font-family: 'JetBrains Mono', monospace;">${b.finalScore}<span style="font-size: 16px; color: var(--text-dim);"> / 100</span></div>
+        <div class="risk-bar">
+          <div class="risk-bar-fill" style="width: ${barWidth}%; background: ${scoreColor};"></div>
+        </div>
+      </div>
+    </div>
+
+    <hr style="margin: 16px 0; opacity: 0.15;" />
+
+    <h5 style="margin-bottom: 12px;">Risk Score Breakdown</h5>
+    <table class="risk-breakdown-table">
+      <tbody>
+        <tr><td>Critical Alerts</td><td>${b.criticalAlerts.count} x 10</td><td style="text-align:right; font-weight:600; color: var(--text-primary);">+${b.criticalAlerts.points}</td></tr>
+        <tr><td>High Alerts</td><td>${b.highAlerts.count} x 5</td><td style="text-align:right; font-weight:600; color: var(--text-primary);">+${b.highAlerts.points}</td></tr>
+        <tr><td>Medium Alerts</td><td>${b.mediumAlerts.count} x 2</td><td style="text-align:right; font-weight:600; color: var(--text-primary);">+${b.mediumAlerts.points}</td></tr>
+        <tr><td>Low Alerts</td><td>${b.lowAlerts.count} x 1</td><td style="text-align:right; font-weight:600; color: var(--text-primary);">+${b.lowAlerts.points}</td></tr>
+        <tr><td>Training Penalty</td><td>${b.trainingPenalty > 0 ? 'Not completed' : 'Completed'}</td><td style="text-align:right; font-weight:600; color: var(--text-primary);">+${b.trainingPenalty}</td></tr>
+        <tr><td>Behavior Impact</td><td></td><td style="text-align:right; font-weight:600; color: var(--text-primary);">+${b.behaviorImpact}</td></tr>
+        <tr><td>Manual Adjustments</td><td></td><td style="text-align:right; font-weight:600; color: ${b.manualAdjustment >= 0 ? 'var(--text-primary)' : '#00e5a0'};">${b.manualAdjustment >= 0 ? '+' : ''}${b.manualAdjustment}</td></tr>
+        <tr style="border-top: 1px solid var(--border-strong);"><td style="font-weight:700; color: var(--text-primary);">Total</td><td></td><td style="text-align:right; font-weight:700; color: ${scoreColor};">${b.finalScore}</td></tr>
+      </tbody>
+    </table>
+
+    <hr style="margin: 16px 0; opacity: 0.15;" />
+  `;
+
+  // Alerts table
+  html += `<h5 style="margin-bottom: 12px;">Associated Alerts (${alerts.length})</h5>`;
+  if (alerts.length > 0) {
+    html += `
+      <div style="max-height: 200px; overflow-y: auto; margin-bottom: 16px;">
+        <table class="table" style="font-size: 12px;">
+          <thead><tr>
+            <th style="padding: 8px;">Date</th>
+            <th style="padding: 8px;">Severity</th>
+            <th style="padding: 8px;">Status</th>
+            <th style="padding: 8px;">Source</th>
+            <th style="padding: 8px;">Vulnerability</th>
+            <th style="padding: 8px;">Asset</th>
+          </tr></thead>
+          <tbody>`;
+    for (const a of alerts) {
+      const sevClass = getSeverityClass(a.Severity);
+      html += `
+            <tr>
+              <td style="padding: 6px 8px;">${a.Date || 'N/A'}</td>
+              <td style="padding: 6px 8px;" class="${sevClass}">${a.Severity || 'N/A'}</td>
+              <td style="padding: 6px 8px;">${a.Status || 'N/A'}</td>
+              <td style="padding: 6px 8px;">${a.AlertSource || 'N/A'}</td>
+              <td style="padding: 6px 8px;">${a.VulnName || 'N/A'}</td>
+              <td style="padding: 6px 8px;">${a.AssetName || 'N/A'}</td>
+            </tr>`;
+    }
+    html += `</tbody></table></div>`;
+  } else {
+    html += '<p style="color: var(--text-dim);">No alerts associated with this user.</p>';
+  }
+
+  // Adjustment history
+  html += `
+    <hr style="margin: 16px 0; opacity: 0.15;" />
+    <h5 style="margin-bottom: 12px;">Manual Adjustment History</h5>`;
+
+  if (adjustments.length > 0) {
+    html += `
+      <div style="max-height: 160px; overflow-y: auto; margin-bottom: 16px;">
+        <table class="table" style="font-size: 12px;">
+          <thead><tr>
+            <th style="padding: 8px;">Value</th>
+            <th style="padding: 8px;">Comment</th>
+            <th style="padding: 8px;">Date</th>
+            <th style="padding: 8px;">Adjusted By</th>
+          </tr></thead>
+          <tbody>`;
+    for (const adj of adjustments) {
+      const valColor = parseInt(adj.AdjustmentValue) > 0 ? '#ff4560' : '#00e5a0';
+      const prefix = parseInt(adj.AdjustmentValue) > 0 ? '+' : '';
+      html += `
+            <tr>
+              <td style="padding: 6px 8px; font-weight: 600; color: ${valColor};">${prefix}${adj.AdjustmentValue}</td>
+              <td style="padding: 6px 8px;">${adj.Comment || 'N/A'}</td>
+              <td style="padding: 6px 8px;">${adj.Timestamp ? new Date(adj.Timestamp).toLocaleDateString() : 'N/A'}</td>
+              <td style="padding: 6px 8px;">${adj.AdjustedBy || 'N/A'}</td>
+            </tr>`;
+    }
+    html += `</tbody></table></div>`;
+  } else {
+    html += '<p style="color: var(--text-dim);">No manual adjustments recorded.</p>';
+  }
+
+  // New adjustment form
+  html += `
+    <hr style="margin: 16px 0; opacity: 0.15;" />
+    <h5 style="margin-bottom: 12px;">Add Risk Adjustment</h5>
+    <div class="modal-form" style="gap: 10px;">
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <div style="flex: 0 0 140px;">
+          <label class="form-label">Adjustment Value</label>
+          <input type="number" id="adjustmentValue" class="form-control" placeholder="e.g. +10 or -5" />
+        </div>
+        <div style="flex: 1; min-width: 200px;">
+          <label class="form-label">Justification</label>
+          <input type="text" id="adjustmentComment" class="form-control" placeholder="Reason for adjustment..." />
+        </div>
+      </div>
+      <button class="btn btn-primary" id="submitAdjustmentBtn" style="align-self: flex-start;">Submit Adjustment</button>
+      <div id="adjustmentMessage" class="alert-message"></div>
+    </div>
+  `;
+
+  return html;
+}
+
+function wireUpAdjustmentForm(userId, currentData, closeModal) {
+  const submitBtn = document.getElementById('submitAdjustmentBtn');
+  const messageDiv = document.getElementById('adjustmentMessage');
+
+  if (!submitBtn) return;
+
+  submitBtn.onclick = async () => {
+    const valueInput = document.getElementById('adjustmentValue');
+    const commentInput = document.getElementById('adjustmentComment');
+    const value = parseInt(valueInput.value);
+    const comment = (commentInput.value || '').trim();
+
+    if (isNaN(value) || value === 0) {
+      messageDiv.className = 'alert-message error';
+      messageDiv.textContent = 'Please enter a non-zero adjustment value.';
+      return;
+    }
+
+    if (!comment) {
+      messageDiv.className = 'alert-message error';
+      messageDiv.textContent = 'Please provide a justification comment.';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+    messageDiv.className = 'alert-message';
+    messageDiv.textContent = '';
+
+    try {
+      const res = await fetch('http://localhost:3000/api/risk-adjustment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, adjustmentValue: value, comment })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        messageDiv.className = 'alert-message success';
+        messageDiv.textContent = `Adjustment saved. New risk score: ${data.newRiskScore}`;
+
+        // Refresh the modal content
+        try {
+          const detailRes = await fetch(`http://localhost:3000/api/user-detail/${userId}`);
+          const detailData = await detailRes.json();
+          const title = document.getElementById('user-detail-modal-title');
+          const content = document.getElementById('user-detail-modal-content');
+          title.textContent = `${detailData.user.User} — Risk Profile`;
+          content.innerHTML = buildUserDetailHTML(detailData);
+          wireUpAdjustmentForm(userId, detailData, closeModal);
+        } catch (e) {}
+
+        // Refresh the background table
+        loadHighRiskUsers();
+      } else {
+        throw new Error(data.error || 'Failed to save adjustment');
+      }
+    } catch (err) {
+      console.error(err);
+      messageDiv.className = 'alert-message error';
+      messageDiv.textContent = 'Error: ' + err.message;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Adjustment';
+    }
+  };
+}
+
 // Initialize charts on document ready
 $(document).ready(function () {
   demo.initDashboardPageCharts();
