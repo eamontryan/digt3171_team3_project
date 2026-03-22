@@ -384,7 +384,12 @@ app.post('/api/register', async (req, res) => {
   let users = [];
   if (fs.existsSync(AUTH_USERS_CSV_PATH)) {
     const content = fs.readFileSync(AUTH_USERS_CSV_PATH, 'utf-8');
-    users = parseCSV(content);
+    // Ensure the file is not empty before parsing
+    if (content.trim()) {
+      users = parseCSV(content);
+    }
+  } else {
+    fs.writeFileSync(AUTH_USERS_CSV_PATH, "Username,PasswordHash,CreatedAt\n");
   }
 
   if (users.some(u => u.Username === username)) {

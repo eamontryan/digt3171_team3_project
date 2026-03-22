@@ -11,6 +11,61 @@ if (logoutBtn) {
   });
 }
 
+// Sidebar Highlight Logic
+document.addEventListener('DOMContentLoaded', () => {
+  const navItems = document.querySelectorAll('.sidebar .nav li');
+  
+  // Set initial active state based on URL hash (e.g., coming from alerts.html)
+  const currentHash = window.location.hash;
+  if (currentHash) {
+    navItems.forEach(item => {
+      const link = item.querySelector('a');
+      if (link && link.getAttribute('href') && link.getAttribute('href').endsWith(currentHash)) {
+        navItems.forEach(nav => nav.classList.remove('active'));
+        item.classList.add('active');
+        
+        // Scroll adjustment for navbar when landing via external link
+        const targetElement = document.querySelector(currentHash);
+        if (targetElement) {
+          setTimeout(() => {
+            window.scrollTo({
+              top: targetElement.offsetTop - 80, // Offset for navbar
+              behavior: 'smooth'
+            });
+          }, 100);
+        }
+      }
+    });
+  }
+
+  // Handle clicks dynamically within the page
+  navItems.forEach(item => {
+    const link = item.querySelector('a');
+    if (link && link.getAttribute('href') && link.getAttribute('href').includes('#')) {
+      link.addEventListener('click', (e) => {
+        navItems.forEach(nav => nav.classList.remove('active'));
+        item.classList.add('active');
+        
+        // Custom smooth scroll to offset the fixed navbar
+        const hRef = link.getAttribute('href');
+        const id = hRef.includes('#') ? hRef.substring(hRef.indexOf('#')) : null;
+        if (id) {
+          const targetElement = document.querySelector(id);
+          if (targetElement && window.location.pathname.endsWith('index.html')) {
+            e.preventDefault(); // Only prevent default if we are remaining on the same page
+            history.pushState(null, null, id);
+            window.scrollTo({
+              top: targetElement.offsetTop - 80,
+              behavior: 'smooth'
+            });
+          }
+        }
+      });
+    }
+  });
+});
+
+
 
 // ----------------------------
 // GLOBAL STATE (so we can re-sort + re-render without re-fetching)
