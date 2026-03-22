@@ -1,7 +1,7 @@
 type = ['primary', 'info', 'success', 'warning', 'danger'];
 let assetTypeChart = null;
 let priorityBucketChart = null;
-
+ 
 // Auth Logic
 const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) {
@@ -10,7 +10,7 @@ if (logoutBtn) {
     window.location.href = 'login.html';
   });
 }
-
+ 
 // Sidebar Highlight Logic
 document.addEventListener('DOMContentLoaded', () => {
   const navItems = document.querySelectorAll('.sidebar .nav li');
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
+ 
   // Handle clicks dynamically within the page
   navItems.forEach(item => {
     const link = item.querySelector('a');
@@ -64,9 +64,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
-
-
-
+ 
+ 
+ 
 // ----------------------------
 // GLOBAL STATE (so we can re-sort + re-render without re-fetching)
 // ----------------------------
@@ -82,7 +82,7 @@ const TABLE_STATE = {
     sortDir: 'asc'
   }
 };
-
+ 
 // ----------------------------
 // SEVERITY helpers
 // ----------------------------
@@ -94,7 +94,7 @@ function severityRank(sev) {
   if (s === 'low') return 1;
   return 0;
 }
-
+ 
 function getSeverityClass(severity) {
   if (!severity) return '';
   switch (severity.toLowerCase()) {
@@ -105,7 +105,7 @@ function getSeverityClass(severity) {
     default: return '';
   }
 }
-
+ 
 function pickHighestSeverity(severities) {
   let best = '';
   let bestRank = 0;
@@ -118,31 +118,31 @@ function pickHighestSeverity(severities) {
   }
   return best || 'N/A';
 }
-
+ 
 function getPriorityBucket(severity, assetTypes = []) {
   const sev = (severity || '').toLowerCase();
-
+ 
   const normalizedAssetTypes = assetTypes.map(a => (a || '').toLowerCase());
-
+ 
   const hasCriticalAsset =
     normalizedAssetTypes.includes('server') ||
     normalizedAssetTypes.includes('cloud') ||
     normalizedAssetTypes.includes('networking') ||
     normalizedAssetTypes.includes('database');
-
+ 
   if (sev === 'critical') return 'P1 - Critical';
-
+ 
   if (sev === 'high' && hasCriticalAsset) return 'P1 - Critical';
-
+ 
   if (sev === 'high') return 'P2 - High';
-
+ 
   if (sev === 'medium' && hasCriticalAsset) return 'P2 - High';
-
+ 
   if (sev === 'medium') return 'P3 - Medium';
-
+ 
   return 'P4 - Low';
 }
-
+ 
 function getPriorityBucketCounts(rows) {
   const counts = {
     'P1 - Critical': 0,
@@ -150,16 +150,16 @@ function getPriorityBucketCounts(rows) {
     'P3 - Medium': 0,
     'P4 - Low': 0
   };
-
+ 
   rows.forEach(v => {
     if (counts[v.priorityBucket] !== undefined) {
       counts[v.priorityBucket]++;
     }
   });
-
+ 
   return counts;
 }
-
+ 
 // ----------------------------
 // CSV PARSER (simple)
 // ----------------------------
@@ -167,7 +167,7 @@ function parseCSV(text) {
   const lines = text.split('\n').filter(line => line.trim() !== '');
   const headers = lines[0].split(',').map(h => h.trim());
   const data = [];
-
+ 
   for (let i = 1; i < lines.length; i++) {
     const values = lines[i].split(',');
     const entry = {};
@@ -178,29 +178,29 @@ function parseCSV(text) {
   }
   return data;
 }
-
+ 
 // ----------------------------
 // GENERIC SORTER (text / number / severity)
 // ----------------------------
 function sortRows(rows, key, type, dir) {
   const mult = dir === 'asc' ? 1 : -1;
-
+ 
   return rows.slice().sort((a, b) => {
     const av = a[key];
     const bv = b[key];
-
+ 
     if (type === 'number') {
       const an = Number(av) || 0;
       const bn = Number(bv) || 0;
       return (an - bn) * mult;
     }
-
+ 
     if (type === 'severity') {
       const ar = severityRank(av);
       const br = severityRank(bv);
       return (ar - br) * mult;
     }
-
+ 
     // default: text
     const as = (av || '').toString().toLowerCase();
     const bs = (bv || '').toString().toLowerCase();
@@ -209,18 +209,18 @@ function sortRows(rows, key, type, dir) {
     return 0;
   });
 }
-
+ 
 // ----------------------------
 // RENDER: Vulnerability table from TABLE_STATE.vuln.rows
 // ----------------------------
 function renderVulnTable() {
   const tbody = document.getElementById('vulnerability-table-body');
   if (!tbody) return;
-
+ 
   let html = '';
   for (const v of TABLE_STATE.vuln.rows) {
     const severityClass = getSeverityClass(v.severity);
-
+ 
     html += `
       <tr class="vuln-row" data-vulnid="${v.vulnId}" data-cve="${v.cve}">
         <td>${v.cve || 'N/A'}</td>
@@ -231,24 +231,24 @@ function renderVulnTable() {
       </tr>
     `;
   }
-
+ 
   tbody.innerHTML = html;
-
+ 
   // Re-wire modal clicks because we just rebuilt the rows
   wireUpCveModal(TABLE_STATE.vuln.modalData);
 }
-
+ 
 // ----------------------------
 // RENDER: Asset table from TABLE_STATE.asset.rows
 // ----------------------------
 function renderAssetTable() {
   const tbody = document.getElementById('asset-table-body');
   if (!tbody) return;
-
+ 
   let html = '';
   for (const a of TABLE_STATE.asset.rows) {
     const sevClass = getSeverityClass(a.highestSeverity);
-
+ 
     html += `
       <tr>
         <td>${a.assetId || 'N/A'}</td>
@@ -259,10 +259,10 @@ function renderAssetTable() {
       </tr>
     `;
   }
-
+ 
   tbody.innerHTML = html;
 }
-
+ 
 // ----------------------------
 // SORT BUTTON WIRING (works for both tables)
 // ----------------------------
@@ -271,11 +271,11 @@ function wireUpSortButtons() {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-
+ 
       const tableName = btn.getAttribute('data-table'); // "vuln" or "asset"
       const key = btn.getAttribute('data-key');         // normalized key
       const type = btn.getAttribute('data-type');       // text/number/severity
-
+ 
       // ------------------------------------
       // STATIC TABLE: High Risk Users
       // ------------------------------------
@@ -285,10 +285,10 @@ function wireUpSortButtons() {
         sortUsersTable(col, sortType);
         return; // IMPORTANT: stop here, do NOT continue
       }
-
+ 
       const state = TABLE_STATE[tableName];
       if (!state) return;
-
+ 
       // toggle direction if clicking same key again
       if (state.sortKey === key) {
         state.sortDir = (state.sortDir === 'asc') ? 'desc' : 'asc';
@@ -296,35 +296,35 @@ function wireUpSortButtons() {
         state.sortKey = key;
         state.sortDir = 'asc';
       }
-
+ 
       // update arrow UI on buttons (optional)
       document.querySelectorAll(`.sort-btn[data-table="${tableName}"]`).forEach(b => {
         b.classList.remove('is-asc', 'is-desc');
       });
       btn.classList.add(state.sortDir === 'asc' ? 'is-asc' : 'is-desc');
-
+ 
       // sort + render correct table
       state.rows = sortRows(state.rows, key, type, state.sortDir);
-
+ 
       if (tableName === 'vuln') renderVulnTable();
       if (tableName === 'asset') renderAssetTable();
     });
   });
 }
-
+ 
 function renderPriorityBucketChart() {
   const canvas = document.getElementById('priorityBucketChart');
   if (!canvas) return;
-
+ 
   const counts = getPriorityBucketCounts(TABLE_STATE.vuln.rows);
-
+ 
   const labels = ['P1 - Critical', 'P2 - High', 'P3 - Medium', 'P4 - Low'];
   const data = labels.map(label => counts[label]);
-
+ 
   if (priorityBucketChart) {
     priorityBucketChart.destroy();
   }
-
+ 
   priorityBucketChart = new Chart(canvas, {
     type: 'doughnut',
     data: {
@@ -356,7 +356,7 @@ function renderPriorityBucketChart() {
     }
   });
 }
-
+ 
 // ----------------------------
 // CHARTS (your existing demo init)
 // ----------------------------
@@ -395,7 +395,7 @@ demo = {
         }]
       }
     };
-
+ 
     function createOrangeGradient(ctx) {
       const gradient = ctx.createLinearGradient(0, 230, 0, 50);
       gradient.addColorStop(1, "rgba(249, 99, 59, 0.15)");
@@ -403,51 +403,34 @@ demo = {
       gradient.addColorStop(0, "rgba(249, 99, 59, 0)");
       return gradient;
     }
-
+ 
     // 1) Alerts line chart
     let alertCtx = document.getElementById("alertChart").getContext("2d");
     let alertGradient = createOrangeGradient(alertCtx);
-
+ 
     // Load alerts data and create chart
     loadAlertsChart(alertCtx, alertGradient, gradientBarChartConfiguration);
-
+ 
     // 2) Vuln type bar chart - will be loaded dynamically
     let vulCtx = document.getElementById("vulChart").getContext("2d");
     let vulGradient = createOrangeGradient(vulCtx);
     loadVulnerabilityTypesChart(vulCtx, vulGradient, gradientBarChartConfiguration);
-
+ 
     // 3) Alerts by department - will be loaded dynamically
     let mainBarCtx = document.getElementById("mainBarChart").getContext("2d");
     let gradientStroke = createOrangeGradient(mainBarCtx);
     loadAlertsByDepartmentChart(mainBarCtx, gradientStroke, gradientBarChartConfiguration);
-
+ 
     // 4) Severity pie - will be loaded dynamically
     let severityCtx = document.getElementById("severityChart").getContext("2d");
     loadSeverityChart(severityCtx);
-
+ 
     // 5) Status pie - will be loaded dynamically
     let statusCtx = document.getElementById("statusChart").getContext("2d");
     loadStatusChart(statusCtx);
-
-    // 6) Asset types chart (will be updated from real data)
-    let assetCtx = document.getElementById("assetChart").getContext("2d");
-    let assetGradient = createOrangeGradient(assetCtx);
-
-    assetTypeChart = new Chart(assetCtx, {
-      type: "bar",
-      data: {
-        labels: ["Workstation", "Server", "Cloud", "Networking"],
-        datasets: [{
-          label: "Assets",
-          backgroundColor: assetGradient,
-          borderColor: "#f96332",
-          borderWidth: 2,
-          data: [2, 1, 2, 1]
-        }]
-      },
-      options: gradientBarChartConfiguration
-    });
-
+ 
+    // 6) Asset types chart - rendered as icon cards by updateAssetTypeChartFromData()
+ 
     // Load tables + wire sorting
     loadVulnerabilityData();
     loadAssetInventory();
@@ -455,7 +438,7 @@ demo = {
     wireUpSortButtons();
   }
 };
-
+ 
 // ----------------------------
 // LOAD HIGH RISK USERS TABLE
 // ----------------------------
@@ -465,20 +448,20 @@ async function loadHighRiskUsers() {
       fetch('users.csv?t=' + Date.now()),
       fetch('alerts.csv?t=' + Date.now())
     ]);
-
+ 
     if (!usersRes.ok) throw new Error('users.csv not found');
     if (!alertsRes.ok) throw new Error('alerts.csv not found');
-
+ 
     const users = parseCSV(await usersRes.text());
     const alerts = parseCSV(await alertsRes.text());
-
+ 
     // Count alerts per user
     const userAlertCounts = new Map();
     for (const alert of alerts) {
       const userId = alert.UserID;
       userAlertCounts.set(userId, (userAlertCounts.get(userId) || 0) + 1);
     }
-
+ 
     // Build user data with actual alert counts
     const userData = users.map(user => ({
       name: user.User || 'Unknown',
@@ -487,14 +470,14 @@ async function loadHighRiskUsers() {
       alerts: userAlertCounts.get(user.UserID) || 0,
       riskScore: parseInt(user.RiskScore) || 0
     }));
-
+ 
     // Sort by risk score descending
     userData.sort((a, b) => b.riskScore - a.riskScore);
-
+ 
     // Render table
     const tbody = document.getElementById('users-table-body');
     if (!tbody) return;
-
+ 
     let html = '';
     for (const user of userData) {
       html += `
@@ -508,35 +491,105 @@ async function loadHighRiskUsers() {
       `;
     }
     tbody.innerHTML = html;
-
+ 
   } catch (error) {
     console.error('Error loading high risk users:', error);
   }
 }
-
+ 
 // ----------------------------
 // Update Asset Type chart based on alerts grouped by asset type
 // ----------------------------
 function updateAssetTypeChartFromData(assets, alerts) {
-  if (!assetTypeChart) return;
-
   const idToType = new Map();
   for (const a of assets) idToType.set((a.AssetID || '').trim(), (a.AssetType || 'Unknown').trim());
-
+ 
   const counts = new Map();
   for (const al of alerts) {
     const t = idToType.get((al.AssetID || '').trim()) || 'Unknown';
     counts.set(t, (counts.get(t) || 0) + 1);
   }
-
-  const labels = Array.from(counts.keys());
-  const data = labels.map(l => counts.get(l));
-
-  assetTypeChart.data.labels = labels;
-  assetTypeChart.data.datasets[0].data = data;
-  assetTypeChart.update();
+ 
+  // Icon map for known asset types
+  const iconMap = {
+    'Server':      { icon: '🖥️',  color: '#00d4ff', glow: 'rgba(0,212,255,0.18)' },
+    'Cloud':       { icon: '☁️',  color: '#a78bfa', glow: 'rgba(167,139,250,0.18)' },
+    'Networking':  { icon: '🔗',  color: '#34d399', glow: 'rgba(52,211,153,0.18)' },
+    'Workstation': { icon: '💻',  color: '#fb923c', glow: 'rgba(251,146,60,0.18)' },
+    'Database':    { icon: '🗄️',  color: '#f472b6', glow: 'rgba(244,114,182,0.18)' },
+    'Unknown':     { icon: '❓',  color: '#6b7280', glow: 'rgba(107,114,128,0.18)' },
+  };
+ 
+  // Destroy the old canvas-based chart if it exists
+  if (assetTypeChart) {
+    assetTypeChart.destroy();
+    assetTypeChart = null;
+  }
+ 
+  const canvas = document.getElementById('assetChart');
+  if (!canvas) return;
+ 
+  // Replace canvas with a div for the icon cards
+  const container = canvas.parentElement;
+  container.removeChild(canvas);
+ 
+  const wrapper = document.createElement('div');
+  wrapper.id = 'assetIconGrid';
+  wrapper.style.cssText = `
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 10px 0;
+  `;
+ 
+  const total = Array.from(counts.values()).reduce((a, b) => a + b, 0);
+ 
+  for (const [type, count] of counts.entries()) {
+    const cfg = iconMap[type] || iconMap['Unknown'];
+    const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+ 
+    const card = document.createElement('div');
+    card.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid ${cfg.color}33;
+      border-radius: 14px;
+      padding: 18px 20px;
+      min-width: 110px;
+      flex: 1;
+      gap: 8px;
+      box-shadow: 0 0 18px ${cfg.glow};
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: default;
+    `;
+    card.onmouseenter = () => {
+      card.style.transform = 'translateY(-3px)';
+      card.style.boxShadow = `0 0 28px ${cfg.glow}`;
+    };
+    card.onmouseleave = () => {
+      card.style.transform = '';
+      card.style.boxShadow = `0 0 18px ${cfg.glow}`;
+    };
+ 
+    card.innerHTML = `
+      <span style="font-size: 32px; line-height: 1;">${cfg.icon}</span>
+      <span style="font-size: 22px; font-weight: 700; color: ${cfg.color}; font-family: 'JetBrains Mono', monospace; line-height: 1;">${count}</span>
+      <span style="font-size: 11px; font-weight: 600; color: #7a8ba8; text-transform: uppercase; letter-spacing: 0.07em;">${type}</span>
+      <span style="font-size: 10px; color: ${cfg.color}88; font-family: 'JetBrains Mono', monospace;">${pct}%</span>
+    `;
+ 
+    wrapper.appendChild(card);
+  }
+ 
+  container.appendChild(wrapper);
 }
-
+ 
 // ----------------------------
 // LOAD ASSET INVENTORY
 // ----------------------------
@@ -546,32 +599,32 @@ async function loadAssetInventory() {
       fetch('assets.csv?t=' + Date.now()),
       fetch('alerts.csv?t=' + Date.now())
     ]);
-
+ 
     if (!assetsRes.ok) throw new Error("assets.csv not found");
     if (!alertsRes.ok) throw new Error("alerts.csv not found");
-
+ 
     const assets = parseCSV(await assetsRes.text());
     const alerts = parseCSV(await alertsRes.text());
-
+ 
     // Count alerts per asset + collect severity values per asset
     const assetToStats = new Map();
-
+ 
     for (const a of alerts) {
       const assetId = (a.AssetID || '').trim();
       if (!assetId) continue;
-
+ 
       if (!assetToStats.has(assetId)) assetToStats.set(assetId, { count: 0, severities: [] });
-
+ 
       const entry = assetToStats.get(assetId);
       entry.count += 1;
       entry.severities.push(a.Severity);
     }
-
+ 
     // Normalize assets into rows we can sort/re-render
     TABLE_STATE.asset.rows = assets.map(asset => {
       const id = (asset.AssetID || '').trim();
       const stats = assetToStats.get(id) || { count: 0, severities: [] };
-
+ 
       return {
         assetId: asset.AssetID || 'N/A',
         assetName: asset.AssetName || 'N/A',
@@ -580,15 +633,15 @@ async function loadAssetInventory() {
         highestSeverity: pickHighestSeverity(stats.severities)
       };
     });
-
+ 
     renderAssetTable();
     updateAssetTypeChartFromData(assets, alerts);
-
+ 
   } catch (err) {
     console.error('Error loading asset inventory:', err);
   }
 }
-
+ 
 // --------------------------------------------------------
 // LOAD SEVERITY PIE CHART
 // --------------------------------------------------------
@@ -596,28 +649,28 @@ async function loadSeverityChart(ctx) {
   try {
     const response = await fetch('alerts.csv?t=' + Date.now());
     if (!response.ok) throw new Error('alerts.csv not found');
-
+ 
     const data = parseCSV(await response.text());
-
+ 
     // Count by severity
     const severityCounts = {};
     for (const alert of data) {
       const severity = alert.Severity || 'Unknown';
       severityCounts[severity] = (severityCounts[severity] || 0) + 1;
     }
-
+ 
     // Sort by severity rank
     const severityOrder = ['Critical', 'High', 'Medium', 'Low'];
     const labels = [];
     const counts = [];
-
+ 
     for (const sev of severityOrder) {
       if (severityCounts[sev]) {
         labels.push(sev);
         counts.push(severityCounts[sev]);
       }
     }
-
+ 
     new Chart(ctx, {
       type: "pie",
       data: {
@@ -629,13 +682,21 @@ async function loadSeverityChart(ctx) {
           data: counts
         }]
       },
-      options: { maintainAspectRatio: false, cutoutPercentage: 55, legend: { display: false } }
+      options: {
+        maintainAspectRatio: false,
+        cutoutPercentage: 55,
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: { fontColor: '#ffffff', padding: 14, usePointStyle: true, fontSize: 12 }
+        }
+      }
     });
   } catch (error) {
     console.error('Error loading severity chart:', error);
   }
 }
-
+ 
 // --------------------------------------------------------
 // LOAD STATUS PIE CHART
 // --------------------------------------------------------
@@ -643,19 +704,19 @@ async function loadStatusChart(ctx) {
   try {
     const response = await fetch('alerts.csv?t=' + Date.now());
     if (!response.ok) throw new Error('alerts.csv not found');
-
+ 
     const data = parseCSV(await response.text());
-
+ 
     // Count by status
     const statusCounts = {};
     for (const alert of data) {
       const status = alert.Status || 'Unknown';
       statusCounts[status] = (statusCounts[status] || 0) + 1;
     }
-
+ 
     const labels = Object.keys(statusCounts);
     const counts = labels.map(l => statusCounts[l]);
-
+ 
     new Chart(ctx, {
       type: "pie",
       data: {
@@ -667,13 +728,21 @@ async function loadStatusChart(ctx) {
           data: counts
         }]
       },
-      options: { maintainAspectRatio: false, cutoutPercentage: 55, legend: { display: false } }
+      options: {
+        maintainAspectRatio: false,
+        cutoutPercentage: 55,
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: { fontColor: '#ffffff', padding: 14, usePointStyle: true, fontSize: 12 }
+        }
+      }
     });
   } catch (error) {
     console.error('Error loading status chart:', error);
   }
 }
-
+ 
 // --------------------------------------------------------
 // LOAD ALERTS BY DEPARTMENT CHART
 // --------------------------------------------------------
@@ -683,29 +752,29 @@ async function loadAlertsByDepartmentChart(ctx, gradient, chartConfig) {
       fetch('users.csv?t=' + Date.now()),
       fetch('alerts.csv?t=' + Date.now())
     ]);
-
+ 
     if (!usersRes.ok) throw new Error('users.csv not found');
     if (!alertsRes.ok) throw new Error('alerts.csv not found');
-
+ 
     const users = parseCSV(await usersRes.text());
     const alerts = parseCSV(await alertsRes.text());
-
+ 
     // Map UserID to Department
     const userToDept = new Map();
     for (const user of users) {
       userToDept.set(user.UserID, user.Department);
     }
-
+ 
     // Count alerts by department
     const deptCounts = {};
     for (const alert of alerts) {
       const dept = userToDept.get(alert.UserID) || 'Unknown';
       deptCounts[dept] = (deptCounts[dept] || 0) + 1;
     }
-
+ 
     const labels = Object.keys(deptCounts);
     const counts = labels.map(l => deptCounts[l]);
-
+ 
     new Chart(ctx, {
       type: "bar",
       data: {
@@ -724,7 +793,7 @@ async function loadAlertsByDepartmentChart(ctx, gradient, chartConfig) {
     console.error('Error loading alerts by department chart:', error);
   }
 }
-
+ 
 // --------------------------------------------------------
 // LOAD VULNERABILITY TYPES CHART
 // --------------------------------------------------------
@@ -734,20 +803,20 @@ async function loadVulnerabilityTypesChart(ctx, gradient, chartConfig) {
       fetch('vulnerabilities.csv?t=' + Date.now()),
       fetch('alerts.csv?t=' + Date.now())
     ]);
-
+ 
     if (!vulnRes.ok) throw new Error('vulnerabilities.csv not found');
     if (!alertsRes.ok) throw new Error('alerts.csv not found');
-
+ 
     const vulns = parseCSV(await vulnRes.text());
     const alerts = parseCSV(await alertsRes.text());
-
+ 
     // Count alerts per vulnerability
     const vulnCounts = new Map();
     for (const alert of alerts) {
       const vulnId = alert.VulnID;
       vulnCounts.set(vulnId, (vulnCounts.get(vulnId) || 0) + 1);
     }
-
+ 
     // Get vulnerability names and their counts
     const vulnData = [];
     for (const vuln of vulns) {
@@ -757,13 +826,13 @@ async function loadVulnerabilityTypesChart(ctx, gradient, chartConfig) {
         count: count
       });
     }
-
+ 
     // Sort by count descending
     vulnData.sort((a, b) => b.count - a.count);
-
+ 
     const labels = vulnData.map(v => v.name);
     const counts = vulnData.map(v => v.count);
-
+ 
     new Chart(ctx, {
       type: "bar",
       data: {
@@ -782,7 +851,7 @@ async function loadVulnerabilityTypesChart(ctx, gradient, chartConfig) {
     console.error('Error loading vulnerability types chart:', error);
   }
 }
-
+ 
 // --------------------------------------------------------
 // Fetches data from alerts.csv and creates the chart
 // --------------------------------------------------------
@@ -794,7 +863,7 @@ async function loadAlertsChart(ctx, gradient, chartConfig) {
     }
     const csvText = await response.text();
     const data = parseCSV(csvText);
-
+ 
     // Count alerts per month
     const monthlyCounts = {};
     for (const alert of data) {
@@ -803,12 +872,12 @@ async function loadAlertsChart(ctx, gradient, chartConfig) {
         monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
       }
     }
-
+ 
     // Create array for all 12 months
     const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
     const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const alertData = months.map(month => monthlyCounts[month] || 0);
-
+ 
     new Chart(ctx, {
       type: "line",
       data: {
@@ -827,7 +896,7 @@ async function loadAlertsChart(ctx, gradient, chartConfig) {
       },
       options: chartConfig
     });
-
+ 
   } catch (error) {
     console.error('Error loading alerts data:', error);
     // Fallback to default data
@@ -851,7 +920,7 @@ async function loadAlertsChart(ctx, gradient, chartConfig) {
     });
   }
 }
-
+ 
 // ----------------------------
 // LOAD VULNERABILITIES
 // ----------------------------
@@ -863,25 +932,25 @@ async function loadVulnerabilityData() {
       fetch('alerts.csv?t=' + Date.now()),
       fetch('assets.csv?t=' + Date.now())
     ]);
-
+ 
     if (!vulnRes.ok) throw new Error("vulnerabilities.csv not found");
     if (!cveStatsRes.ok) throw new Error("cve_stats.csv not found");
     if (!alertsRes.ok) throw new Error("alerts.csv not found");
     if (!assetsRes.ok) throw new Error("assets.csv not found");
-
+ 
     const vulns = parseCSV(await vulnRes.text());
     const cveStats = parseCSV(await cveStatsRes.text());
     const alerts = parseCSV(await alertsRes.text());
     const assets = parseCSV(await assetsRes.text());
-
+ 
     // Index cve_stats by CVE
     const cveToStats = new Map();
     for (const row of cveStats) cveToStats.set((row.CVE || '').trim(), row);
-
+ 
     // Index assets by AssetID
     const assetById = new Map();
     for (const a of assets) assetById.set((a.AssetID || '').trim(), a);
-
+ 
     // Group alerts by VulnID
     const alertsByVuln = new Map();
     for (const a of alerts) {
@@ -890,18 +959,18 @@ async function loadVulnerabilityData() {
       if (!alertsByVuln.has(id)) alertsByVuln.set(id, []);
       alertsByVuln.get(id).push(a);
     }
-
+ 
     // Build vulnerability rows and assign priority buckets
     TABLE_STATE.vuln.rows = vulns.map(v => {
       const vulnId = (v.VulnID || '').trim();
       const relatedAlerts = alertsByVuln.get(vulnId) || [];
-
+ 
       const assetTypes = relatedAlerts.map(alert => {
         const assetId = (alert.AssetID || '').trim();
         const asset = assetById.get(assetId);
         return asset ? asset.AssetType : null;
       }).filter(Boolean);
-
+ 
       return {
         vulnId,
         cve: v.CVE || 'N/A',
@@ -912,7 +981,7 @@ async function loadVulnerabilityData() {
         priorityBucket: getPriorityBucket(v.Severity, assetTypes)
       };
     });
-
+ 
     // store modal data so re-render can re-wire clicks
     TABLE_STATE.vuln.modalData = {
       vulns,
@@ -920,15 +989,15 @@ async function loadVulnerabilityData() {
       alertsByVuln,
       assetById
     };
-
+ 
     renderVulnTable();
     renderPriorityBucketChart();
-
+ 
   } catch (error) {
     console.error('Error loading vulnerability data:', error);
   }
 }
-
+ 
 // ----------------------------
 // CVE MODAL (unchanged behaviour, just called after every re-render)
 // ----------------------------
@@ -937,100 +1006,100 @@ function wireUpCveModal({ vulns, cveToStats, alertsByVuln, assetById }) {
   const title = document.getElementById('cve-modal-title');
   const content = document.getElementById('cve-modal-content');
   const closeBtn = document.getElementById('cve-modal-close');
-
+ 
   if (!modal || !title || !content || !closeBtn) return;
-
+ 
   function open() {
     modal.classList.remove('modal-hidden');
     modal.classList.add('modal-visible');
   }
-
+ 
   function close() {
     modal.classList.add('modal-hidden');
     modal.classList.remove('modal-visible');
   }
-
+ 
   closeBtn.onclick = close;
   modal.onclick = (e) => { if (e.target === modal) close(); };
-
+ 
   const vulnById = new Map();
   for (const v of vulns) vulnById.set((v.VulnID || '').trim(), v);
-
+ 
   document.querySelectorAll('.vuln-row').forEach(row => {
     row.addEventListener('click', () => {
       const vulnId = (row.getAttribute('data-vulnid') || '').trim();
       const v = vulnById.get(vulnId);
       if (!v) return;
-
+ 
       const stats = cveToStats.get((v.CVE || '').trim()) || {};
       const relatedAlerts = alertsByVuln.get(vulnId) || [];
-
+ 
       const impacted = new Map();
       for (const a of relatedAlerts) {
         const id = (a.AssetID || '').trim();
         impacted.set(id, (impacted.get(id) || 0) + 1);
       }
-
+ 
       const impactedList = Array.from(impacted.entries()).map(([assetId, count]) => {
         const asset = assetById.get(assetId) || {};
         return `<li><b>${assetId}</b> — ${asset.AssetName || 'Unknown'} (${asset.AssetType || 'Unknown'}) — ${count} alert(s)</li>`;
       }).join('');
-
+ 
       title.textContent = `${v.CVE} — Details`;
-
+ 
       content.innerHTML = `
         <p><b>Name:</b> ${v.Name || 'N/A'}</p>
         <p><b>Severity:</b> ${v.Severity || 'N/A'}</p>
-
+ 
         <hr style="margin:12px 0; opacity:0.2;" />
-
+ 
         <p><b>CVSS:</b> ${stats.CVSS || 'N/A'}</p>
         <p><b>Exploitability:</b> ${stats.ExploitabilityScore || 'N/A'}</p>
         <p><b>Attack Vector:</b> ${stats.AttackVector || 'N/A'}</p>
         <p><b>Published:</b> ${stats.PublishedDate || 'N/A'}</p>
         <p><b>Description:</b> ${stats.Description || 'N/A'}</p>
-
+ 
         <hr style="margin:12px 0; opacity:0.2;" />
-
+ 
         <p><b>Impacted assets:</b></p>
         <ul>
           ${impactedList || '<li>None found</li>'}
         </ul>
       `;
-
+ 
       open();
     });
   });
 }
-
+ 
 // ------------------------------
 // High Risk Users table sorting
 // (sorts the existing static rows)
 // ------------------------------
 const usersSortState = {}; // key: "colIndex" -> true/false (asc/desc)
-
+ 
 function parseBool(val) {
   const v = (val || '').trim().toLowerCase();
   return v === 'true' ? 1 : 0; // True > False (change if you want opposite)
 }
-
+ 
 function sortUsersTable(colIndex, type) {
   const table = document.getElementById('users-table');
   if (!table) return;
-
+ 
   const tbody = table.querySelector('tbody');
   const rows = Array.from(tbody.querySelectorAll('tr'));
-
+ 
   // Toggle asc/desc for this column
   usersSortState[colIndex] = !usersSortState[colIndex];
   const asc = usersSortState[colIndex];
-
+ 
   rows.sort((r1, r2) => {
     const aText = r1.children[colIndex]?.textContent.trim() ?? '';
     const bText = r2.children[colIndex]?.textContent.trim() ?? '';
-
+ 
     let cmp = 0;
-
+ 
     if (type === 'number') {
       const a = Number(aText) || 0;
       const b = Number(bText) || 0;
@@ -1043,15 +1112,15 @@ function sortUsersTable(colIndex, type) {
       // string
       cmp = aText.localeCompare(bText);
     }
-
+ 
     return asc ? cmp : -cmp;
   });
-
+ 
   // Re-attach in new order
   tbody.innerHTML = '';
   rows.forEach(r => tbody.appendChild(r));
 }
-
+ 
 // ----------------------------
 // ALERT SIMULATION MODAL
 // ----------------------------
@@ -1062,9 +1131,9 @@ function setupAlertSimulationModal() {
   const triggerAlertBtn = document.getElementById('triggerAlertBtn');
   const alertMessage = document.getElementById('alertMessage');
   const alertEmailInput = document.getElementById('alertEmail');
-
+ 
   if (!modal || !btn) return;
-
+ 
   function openModal() {
     modal.classList.remove('modal-hidden');
     modal.classList.add('modal-visible');
@@ -1072,34 +1141,34 @@ function setupAlertSimulationModal() {
     alertMessage.textContent = '';
     alertEmailInput.value = '';
   }
-
+ 
   function closeModal() {
     modal.classList.add('modal-hidden');
     modal.classList.remove('modal-visible');
   }
-
+ 
   // Open modal
   btn.onclick = openModal;
-
+ 
   // Close modal
   if (closeBtn) closeBtn.onclick = closeModal;
-
+ 
   // Close when clicking outside
   modal.onclick = (e) => {
     if (e.target === modal) closeModal();
   };
-
+ 
   // Trigger alert
   if (triggerAlertBtn) {
     triggerAlertBtn.onclick = async function () {
       const email = alertEmailInput.value.trim();
-
+ 
       if (!email) {
         alertMessage.className = 'alert-message error';
         alertMessage.textContent = 'Please enter a valid email address.';
         return;
       }
-
+ 
       // Email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
@@ -1107,13 +1176,13 @@ function setupAlertSimulationModal() {
         alertMessage.textContent = 'Please enter a valid email address.';
         return;
       }
-
+ 
       // Disable button during request
       triggerAlertBtn.disabled = true;
       triggerAlertBtn.textContent = 'Creating Alert...';
       alertMessage.className = 'alert-message';
       alertMessage.textContent = '';
-
+ 
       try {
         const response = await fetch('http://localhost:3000/api/simulate-alert', {
           method: 'POST',
@@ -1122,14 +1191,14 @@ function setupAlertSimulationModal() {
           },
           body: JSON.stringify({ email: email })
         });
-
+ 
         const data = await response.json();
-
+ 
         if (data.success) {
           alertMessage.className = 'alert-message success';
           alertMessage.textContent = `Alert ${data.alert.AlertID} created successfully! Check your email.`;
           alertEmailInput.value = '';
-
+ 
           // Close modal after 3 seconds
           setTimeout(() => {
             closeModal();
@@ -1149,7 +1218,7 @@ function setupAlertSimulationModal() {
     };
   }
 }
-
+ 
 // ----------------------------
 // USER BEHAVIOR SIMULATION MODAL
 // ----------------------------
@@ -1161,15 +1230,15 @@ function setupBehaviorSimulationModal() {
   const messageDiv = document.getElementById('behaviorMessage');
   const userSelect = document.getElementById('behaviorUserSelect');
   const typeSelect = document.getElementById('behaviorTypeSelect');
-
+ 
   if (!modal || !btn) return;
-
+ 
   async function populateUserSelect() {
     try {
       const response = await fetch('users.csv?t=' + Date.now());
       const text = await response.text();
       const users = parseCSV(text);
-
+ 
       userSelect.innerHTML = '';
       users.forEach(user => {
         const option = document.createElement('option');
@@ -1183,7 +1252,7 @@ function setupBehaviorSimulationModal() {
       messageDiv.className = 'alert-message error';
     }
   }
-
+ 
   function openModal() {
     modal.classList.remove('modal-hidden');
     modal.classList.add('modal-visible');
@@ -1194,33 +1263,33 @@ function setupBehaviorSimulationModal() {
       populateUserSelect();
     }
   }
-
+ 
   function closeModal() {
     modal.classList.add('modal-hidden');
     modal.classList.remove('modal-visible');
   }
-
+ 
   btn.onclick = openModal;
   if (closeBtn) closeBtn.onclick = closeModal;
   modal.onclick = (e) => { if (e.target === modal) closeModal(); };
-
+ 
   if (triggerBtn) {
     triggerBtn.onclick = async () => {
       const userId = userSelect.value;
       const behaviorOption = typeSelect.options[typeSelect.selectedIndex];
       const behaviorType = behaviorOption.value;
       const riskImpact = behaviorOption.getAttribute('data-risk');
-
+ 
       if (!userId || !behaviorType) {
         messageDiv.textContent = 'Please select a user and behavior.';
         messageDiv.className = 'alert-message error';
         return;
       }
-
+ 
       triggerBtn.disabled = true;
       triggerBtn.textContent = 'Logging...';
       messageDiv.textContent = '';
-
+ 
       try {
         const res = await fetch('http://localhost:3000/api/log-behavior', {
           method: 'POST',
@@ -1228,7 +1297,7 @@ function setupBehaviorSimulationModal() {
           body: JSON.stringify({ userId, behaviorType, riskImpact })
         });
         const data = await res.json();
-
+ 
         if (data.success) {
           messageDiv.textContent = `Behavior logged! New Risk Score: ${data.newRiskScore}`;
           messageDiv.className = 'alert-message success';
@@ -1248,7 +1317,7 @@ function setupBehaviorSimulationModal() {
     };
   }
 }
-
+ 
 // Initialize charts on document ready
 $(document).ready(function () {
   demo.initDashboardPageCharts();
