@@ -18,7 +18,7 @@
   <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
 
   <!-- CSS -->
-  <link href="styles.css?v=3" rel="stylesheet" />
+  <link href="styles.css?v=5" rel="stylesheet" />
 </head>
 
 <body class="">
@@ -42,6 +42,11 @@
           <li>
             <a href="#pie-charts">
               <p>Breakdowns</p>
+            </a>
+          </li>
+          <li>
+            <a href="#analytics">
+              <p>Analytics</p>
             </a>
           </li>
           <li>
@@ -193,7 +198,76 @@
 
         </section>
 
-        <!-- Section 3: Tables -->
+        <!-- Section 3: Analytics -->
+        <section id="analytics">
+
+          <!-- Row 1: Heatmaps -->
+          <div class="row">
+
+            <div class="col-lg-6 col-sm-12">
+              <div class="card">
+                <div class="card-header">
+                  <h5 class="card-category">Heatmap</h5>
+                  <h4 class="card-title">Department vs Severity</h4>
+                </div>
+                <div class="card-body">
+                  <div id="dept-severity-heatmap"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-6 col-sm-12">
+              <div class="card card-chart">
+                <div class="card-header">
+                  <h5 class="card-category">Trend</h5>
+                  <h4 class="card-title">Severity Over Time</h4>
+                </div>
+                <div class="card-body">
+                  <div class="chart-area" style="height: 280px;">
+                    <canvas id="alert-activity-heatmap"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Row 2: Charts -->
+          <div class="row">
+
+            <div class="col-lg-6 col-sm-12">
+              <div class="card card-chart">
+                <div class="card-header">
+                  <h5 class="card-category">Risk Matrix</h5>
+                  <h4 class="card-title">Vulnerability Landscape</h4>
+                </div>
+                <div class="card-body">
+                  <div class="chart-area" style="height: 300px;">
+                    <canvas id="vulnRiskMatrix"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-6 col-sm-12">
+              <div class="card card-chart">
+                <div class="card-header">
+                  <h5 class="card-category">Breakdown</h5>
+                  <h4 class="card-title">Alert Source by User</h4>
+                </div>
+                <div class="card-body">
+                  <div class="chart-area" style="height: 300px;">
+                    <canvas id="alertSourceByUser"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </section>
+
+        <!-- Section 4: Tables -->
         <section id="tables">
           <div class="row">
 
@@ -438,7 +512,7 @@
   <!-- SCRIPTS -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
-  <script src="main.js?v=3"></script>
+  <script src="main.js?v=5"></script>
 
 </body>
 

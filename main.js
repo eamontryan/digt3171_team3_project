@@ -431,6 +431,12 @@ demo = {
  
     // 6) Asset types chart - rendered as icon cards by updateAssetTypeChartFromData()
  
+    // Load analytics
+    loadDeptSeverityHeatmap();
+    loadAlertActivityHeatmap();
+    loadVulnRiskMatrix();
+    loadAlertSourceByUser();
+
     // Load tables + wire sorting
     loadVulnerabilityData();
     loadAssetInventory();
@@ -439,6 +445,378 @@ demo = {
   }
 };
  
+// ============================================================
+// ANALYTICS VISUALIZATIONS
+// ============================================================
+
+// ----------------------------
+// 1) DEPARTMENT × SEVERITY HEATMAP
+// ----------------------------
+async function loadDeptSeverityHeatmap() {
+  const container = document.getElementById('dept-severity-heatmap');
+  if (!container) return;
+
+  try {
+    const [usersRes, alertsRes] = await Promise.all([
+      fetch('users.csv?t=' + Date.now()),
+      fetch('alerts.csv?t=' + Date.now())
+    ]);
+
+    const users = parseCSV(await usersRes.text());
+    const alerts = parseCSV(await alertsRes.text());
+
+    const userToDept = new Map();
+    for (const u of users) userToDept.set(u.UserID, u.Department || 'Unknown');
+
+    const departments = [...new Set(users.map(u => u.Department || 'Unknown'))].sort();
+    const severities = ['Critical', 'High', 'Medium', 'Low'];
+
+    // Build counts
+    const counts = {};
+    let maxCount = 0;
+    for (const dept of departments) {
+      counts[dept] = {};
+      for (const sev of severities) counts[dept][sev] = 0;
+    }
+
+    for (const a of alerts) {
+      const dept = userToDept.get(a.UserID) || 'Unknown';
+      const sev = a.Severity;
+      if (counts[dept] && counts[dept][sev] !== undefined) {
+        counts[dept][sev]++;
+        if (counts[dept][sev] > maxCount) maxCount = counts[dept][sev];
+      }
+    }
+
+    // Render heatmap grid
+    let html = '<div class="heatmap-grid">';
+    // Header row
+    html += '<div class="heatmap-cell heatmap-label"></div>';
+    for (const sev of severities) {
+      const cls = getSeverityClass(sev);
+      html += `<div class="heatmap-cell heatmap-col-label ${cls}">${sev}</div>`;
+    }
+
+    for (const dept of departments) {
+      html += `<div class="heatmap-cell heatmap-row-label">${dept}</div>`;
+      for (const sev of severities) {
+        const val = counts[dept][sev];
+        const intensity = maxCount > 0 ? val / maxCount : 0;
+        const color = getHeatmapColor(sev, intensity);
+        html += `<div class="heatmap-cell heatmap-value" style="background:${color};" title="${dept} — ${sev}: ${val} alerts">${val}</div>`;
+      }
+    }
+    html += '</div>';
+    container.innerHTML = html;
+
+  } catch (err) {
+    console.error('Error loading dept severity heatmap:', err);
+    container.innerHTML = '<p style="color:var(--text-dim);">Error loading heatmap.</p>';
+  }
+}
+
+function getHeatmapColor(severity, intensity) {
+  if (intensity === 0) return 'rgba(255,255,255,0.03)';
+  const alpha = 0.15 + intensity * 0.7;
+  switch (severity) {
+    case 'Critical': return `rgba(255, 69, 96, ${alpha})`;
+    case 'High':     return `rgba(255, 159, 28, ${alpha})`;
+    case 'Medium':   return `rgba(255, 212, 59, ${alpha})`;
+    case 'Low':      return `rgba(0, 229, 160, ${alpha})`;
+    default:         return `rgba(0, 212, 255, ${alpha})`;
+  }
+}
+
+// ----------------------------
+// 2) SEVERITY TREND (stacked area chart over time)
+// ----------------------------
+async function loadAlertActivityHeatmap() {
+  const canvas = document.getElementById('alert-activity-heatmap');
+  if (!canvas) return;
+
+  try {
+    const res = await fetch('alerts.csv?t=' + Date.now());
+    const alerts = parseCSV(await res.text());
+
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const severities = ['Critical', 'High', 'Medium', 'Low'];
+
+    // Collect all months present
+    const monthSet = new Set();
+    for (const a of alerts) {
+      if (a.Month) monthSet.add(a.Month);
+    }
+    const sortedMonths = [...monthSet].sort();
+
+    // Count per month per severity
+    const counts = {};
+    for (const m of sortedMonths) {
+      counts[m] = { Critical: 0, High: 0, Medium: 0, Low: 0 };
+    }
+    for (const a of alerts) {
+      if (a.Month && counts[a.Month] && a.Severity) {
+        counts[a.Month][a.Severity] = (counts[a.Month][a.Severity] || 0) + 1;
+      }
+    }
+
+    const labels = sortedMonths.map(m => monthNames[parseInt(m) - 1] || m);
+
+    const sevColors = {
+      Critical: { bg: 'rgba(255, 69, 96, 0.35)', border: '#ff4560' },
+      High:     { bg: 'rgba(255, 159, 28, 0.35)', border: '#ff9f1c' },
+      Medium:   { bg: 'rgba(255, 212, 59, 0.25)', border: '#ffd43b' },
+      Low:      { bg: 'rgba(0, 229, 160, 0.25)', border: '#00e5a0' }
+    };
+
+    const datasets = severities.map(sev => ({
+      label: sev,
+      data: sortedMonths.map(m => counts[m][sev]),
+      backgroundColor: sevColors[sev].bg,
+      borderColor: sevColors[sev].border,
+      borderWidth: 2,
+      fill: true,
+      pointBackgroundColor: sevColors[sev].border,
+      pointRadius: 4,
+      pointHoverRadius: 6
+    }));
+
+    new Chart(canvas, {
+      type: 'line',
+      data: { labels, datasets },
+      options: {
+        maintainAspectRatio: false,
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: { fontColor: '#7a8ba8', padding: 15, usePointStyle: true }
+        },
+        tooltips: {
+          backgroundColor: 'rgba(13,21,38,0.95)',
+          titleFontColor: '#e8edf5',
+          bodyFontColor: '#7a8ba8',
+          borderColor: 'rgba(0,212,255,0.2)',
+          borderWidth: 1,
+          mode: 'index',
+          intersect: false
+        },
+        scales: {
+          xAxes: [{
+            ticks: { fontColor: '#7a8ba8' },
+            gridLines: { color: 'rgba(0,212,255,0.06)', zeroLineColor: 'rgba(0,212,255,0.1)' }
+          }],
+          yAxes: [{
+            stacked: true,
+            ticks: { fontColor: '#7a8ba8', beginAtZero: true, stepSize: 2 },
+            gridLines: { color: 'rgba(0,212,255,0.06)', zeroLineColor: 'rgba(0,212,255,0.1)' }
+          }]
+        }
+      }
+    });
+
+  } catch (err) {
+    console.error('Error loading severity trend chart:', err);
+  }
+}
+
+// ----------------------------
+// 3) VULNERABILITY RISK MATRIX (CVSS vs Exploitability bubble chart)
+// ----------------------------
+async function loadVulnRiskMatrix() {
+  const canvas = document.getElementById('vulnRiskMatrix');
+  if (!canvas) return;
+
+  try {
+    const [cveRes, vulnRes, alertsRes] = await Promise.all([
+      fetch('cve_stats.csv?t=' + Date.now()),
+      fetch('vulnerabilities.csv?t=' + Date.now()),
+      fetch('alerts.csv?t=' + Date.now())
+    ]);
+
+    const cveStats = parseCSV(await cveRes.text());
+    const vulns = parseCSV(await vulnRes.text());
+    const alerts = parseCSV(await alertsRes.text());
+
+    // Count alerts per VulnID
+    const alertCounts = {};
+    for (const a of alerts) {
+      alertCounts[a.VulnID] = (alertCounts[a.VulnID] || 0) + 1;
+    }
+
+    // Map CVE to vuln info
+    const cveToVuln = new Map();
+    for (const v of vulns) cveToVuln.set(v.CVE, v);
+
+    // Build bubble data
+    const bubbleData = [];
+    const labels = [];
+
+    for (const stat of cveStats) {
+      const cvss = parseFloat(stat.CVSS) || 0;
+      const exploit = parseFloat(stat.ExploitabilityScore) || 0;
+      const vuln = cveToVuln.get(stat.CVE);
+      const vulnId = vuln ? vuln.VulnID : '';
+      const count = alertCounts[vulnId] || 0;
+
+      bubbleData.push({
+        x: exploit,
+        y: cvss,
+        r: Math.max(4, count * 3)
+      });
+      labels.push(vuln ? vuln.Name : stat.CVE);
+    }
+
+    // Color by CVSS severity
+    const bgColors = cveStats.map(stat => {
+      const cvss = parseFloat(stat.CVSS) || 0;
+      if (cvss >= 9) return 'rgba(255, 69, 96, 0.7)';
+      if (cvss >= 7) return 'rgba(255, 159, 28, 0.7)';
+      if (cvss >= 4) return 'rgba(255, 212, 59, 0.7)';
+      return 'rgba(0, 229, 160, 0.7)';
+    });
+
+    const borderColors = bgColors.map(c => c.replace('0.7', '1'));
+
+    new Chart(canvas, {
+      type: 'bubble',
+      data: {
+        datasets: [{
+          label: 'Vulnerabilities',
+          data: bubbleData,
+          backgroundColor: bgColors,
+          borderColor: borderColors,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        legend: { display: false },
+        tooltips: {
+          backgroundColor: 'rgba(13,21,38,0.95)',
+          titleFontColor: '#e8edf5',
+          bodyFontColor: '#7a8ba8',
+          borderColor: 'rgba(0,212,255,0.2)',
+          borderWidth: 1,
+          callbacks: {
+            label: function(tooltipItem, data) {
+              const idx = tooltipItem.index;
+              const name = labels[idx];
+              const cvss = tooltipItem.yLabel;
+              const exploit = tooltipItem.xLabel;
+              const count = Math.round((data.datasets[0].data[idx].r) / 3);
+              return [name, `CVSS: ${cvss}`, `Exploitability: ${exploit}`, `Alerts: ${count}`];
+            }
+          }
+        },
+        scales: {
+          xAxes: [{
+            scaleLabel: { display: true, labelString: 'Exploitability Score', fontColor: '#7a8ba8' },
+            ticks: { fontColor: '#7a8ba8', min: 0, max: 4.5 },
+            gridLines: { color: 'rgba(0,212,255,0.06)', zeroLineColor: 'rgba(0,212,255,0.1)' }
+          }],
+          yAxes: [{
+            scaleLabel: { display: true, labelString: 'CVSS Score', fontColor: '#7a8ba8' },
+            ticks: { fontColor: '#7a8ba8', min: 0, max: 11 },
+            gridLines: { color: 'rgba(0,212,255,0.06)', zeroLineColor: 'rgba(0,212,255,0.1)' }
+          }]
+        }
+      }
+    });
+
+  } catch (err) {
+    console.error('Error loading vuln risk matrix:', err);
+  }
+}
+
+// ----------------------------
+// 4) ALERT SOURCE BY USER (stacked horizontal bar)
+// ----------------------------
+async function loadAlertSourceByUser() {
+  const canvas = document.getElementById('alertSourceByUser');
+  if (!canvas) return;
+
+  try {
+    const [usersRes, alertsRes] = await Promise.all([
+      fetch('users.csv?t=' + Date.now()),
+      fetch('alerts.csv?t=' + Date.now())
+    ]);
+
+    const users = parseCSV(await usersRes.text());
+    const alerts = parseCSV(await alertsRes.text());
+
+    const userNames = {};
+    for (const u of users) userNames[u.UserID] = u.User || u.UserID;
+
+    // Count alerts by user and source
+    const sources = new Set();
+    const userSourceCounts = {};
+
+    for (const a of alerts) {
+      const uid = a.UserID;
+      const src = a.AlertSource || 'Unknown';
+      sources.add(src);
+      if (!userSourceCounts[uid]) userSourceCounts[uid] = {};
+      userSourceCounts[uid][src] = (userSourceCounts[uid][src] || 0) + 1;
+    }
+
+    const userIds = Object.keys(userNames).sort();
+    const labels = userIds.map(id => userNames[id]);
+    const sourceList = [...sources].sort();
+
+    const sourceColors = {
+      'Vulnerability': { bg: 'rgba(0, 212, 255, 0.7)', border: 'rgba(0, 212, 255, 1)' },
+      'UserBehaviour': { bg: 'rgba(249, 99, 50, 0.7)', border: 'rgba(249, 99, 50, 1)' }
+    };
+    const defaultColor = { bg: 'rgba(122, 139, 168, 0.7)', border: 'rgba(122, 139, 168, 1)' };
+
+    const datasets = sourceList.map(src => {
+      const colors = sourceColors[src] || defaultColor;
+      return {
+        label: src,
+        data: userIds.map(uid => (userSourceCounts[uid] && userSourceCounts[uid][src]) || 0),
+        backgroundColor: colors.bg,
+        borderColor: colors.border,
+        borderWidth: 1
+      };
+    });
+
+    new Chart(canvas, {
+      type: 'horizontalBar',
+      data: { labels, datasets },
+      options: {
+        maintainAspectRatio: false,
+        legend: {
+          display: true,
+          position: 'bottom',
+          labels: { fontColor: '#7a8ba8', padding: 15, usePointStyle: true }
+        },
+        tooltips: {
+          backgroundColor: 'rgba(13,21,38,0.95)',
+          titleFontColor: '#e8edf5',
+          bodyFontColor: '#7a8ba8',
+          borderColor: 'rgba(0,212,255,0.2)',
+          borderWidth: 1,
+          mode: 'index'
+        },
+        scales: {
+          xAxes: [{
+            stacked: true,
+            ticks: { fontColor: '#7a8ba8', beginAtZero: true, stepSize: 1 },
+            gridLines: { color: 'rgba(0,212,255,0.06)', zeroLineColor: 'rgba(0,212,255,0.1)' }
+          }],
+          yAxes: [{
+            stacked: true,
+            ticks: { fontColor: '#7a8ba8' },
+            gridLines: { color: 'rgba(0,212,255,0.06)' }
+          }]
+        }
+      }
+    });
+
+  } catch (err) {
+    console.error('Error loading alert source by user:', err);
+  }
+}
+
 // ----------------------------
 // LOAD HIGH RISK USERS TABLE
 // ----------------------------

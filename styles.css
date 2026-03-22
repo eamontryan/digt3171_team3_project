@@ -916,6 +916,60 @@ select:focus {
    SCROLLBAR
 ================================================== */
 /* ==================================================
+   DEPARTMENT × SEVERITY HEATMAP
+================================================== */
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: 100px repeat(4, 1fr);
+  gap: 3px;
+}
+
+.heatmap-cell {
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.heatmap-value:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 12px rgba(0,212,255,0.2);
+  z-index: 1;
+}
+
+.heatmap-label {
+  background: transparent;
+}
+
+.heatmap-col-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 8px 4px;
+}
+
+.heatmap-row-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: right;
+  padding-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.heatmap-value {
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  cursor: default;
+}
+
+/* ==================================================
    RISK BREAKDOWN TABLE
 ================================================== */
 .risk-breakdown-table {
