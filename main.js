@@ -728,59 +728,100 @@ async function loadVulnRiskMatrix() {
 }
 
 // ----------------------------
-// 4) ALERT SOURCE BY USER (stacked horizontal bar)
+// 4) ASSET RISK RADAR (multi-dimensional asset type exposure)
 // ----------------------------
 async function loadAlertSourceByUser() {
   const canvas = document.getElementById('alertSourceByUser');
   if (!canvas) return;
 
   try {
-    const [usersRes, alertsRes] = await Promise.all([
-      fetch('users.csv?t=' + Date.now()),
-      fetch('alerts.csv?t=' + Date.now())
+    const [assetsRes, alertsRes, vulnRes] = await Promise.all([
+      fetch('assets.csv?t=' + Date.now()),
+      fetch('alerts.csv?t=' + Date.now()),
+      fetch('vulnerabilities.csv?t=' + Date.now())
     ]);
 
-    const users = parseCSV(await usersRes.text());
+    const assets = parseCSV(await assetsRes.text());
     const alerts = parseCSV(await alertsRes.text());
+    const vulns = parseCSV(await vulnRes.text());
 
-    const userNames = {};
-    for (const u of users) userNames[u.UserID] = u.User || u.UserID;
+    // Map AssetID -> AssetType
+    const assetTypeMap = new Map();
+    for (const a of assets) assetTypeMap.set(a.AssetID, a.AssetType || 'Unknown');
 
-    // Count alerts by user and source
-    const sources = new Set();
-    const userSourceCounts = {};
+    // Map VulnID -> severity rank for avg severity calc
+    const vulnSevMap = new Map();
+    for (const v of vulns) vulnSevMap.set(v.VulnID, v.Severity);
+
+    // Gather stats per asset type
+    const typeStats = {};
 
     for (const a of alerts) {
-      const uid = a.UserID;
-      const src = a.AlertSource || 'Unknown';
-      sources.add(src);
-      if (!userSourceCounts[uid]) userSourceCounts[uid] = {};
-      userSourceCounts[uid][src] = (userSourceCounts[uid][src] || 0) + 1;
+      const type = assetTypeMap.get(a.AssetID) || 'Unknown';
+      if (!typeStats[type]) {
+        typeStats[type] = { alerts: 0, sevSum: 0, vulns: new Set(), users: new Set(), criticals: 0 };
+      }
+      const s = typeStats[type];
+      s.alerts++;
+      s.vulns.add(a.VulnID);
+      s.users.add(a.UserID);
+
+      // Severity as numeric for averaging
+      switch (a.Severity) {
+        case 'Critical': s.sevSum += 4; s.criticals++; break;
+        case 'High':     s.sevSum += 3; break;
+        case 'Medium':   s.sevSum += 2; break;
+        case 'Low':      s.sevSum += 1; break;
+      }
     }
 
-    const userIds = Object.keys(userNames).sort();
-    const labels = userIds.map(id => userNames[id]);
-    const sourceList = [...sources].sort();
+    const types = Object.keys(typeStats).sort();
 
-    const sourceColors = {
-      'Vulnerability': { bg: 'rgba(0, 212, 255, 0.7)', border: 'rgba(0, 212, 255, 1)' },
-      'UserBehaviour': { bg: 'rgba(249, 99, 50, 0.7)', border: 'rgba(249, 99, 50, 1)' }
-    };
-    const defaultColor = { bg: 'rgba(122, 139, 168, 0.7)', border: 'rgba(122, 139, 168, 1)' };
+    // Normalize each dimension to 0-10 scale for radar
+    const rawAlerts = types.map(t => typeStats[t].alerts);
+    const rawAvgSev = types.map(t => typeStats[t].alerts > 0 ? typeStats[t].sevSum / typeStats[t].alerts : 0);
+    const rawVulns = types.map(t => typeStats[t].vulns.size);
+    const rawUsers = types.map(t => typeStats[t].users.size);
+    const rawCriticals = types.map(t => typeStats[t].criticals);
 
-    const datasets = sourceList.map(src => {
-      const colors = sourceColors[src] || defaultColor;
+    function normalize(arr) {
+      const max = Math.max(...arr, 1);
+      return arr.map(v => Math.round((v / max) * 10 * 10) / 10);
+    }
+
+    const normAlerts = normalize(rawAlerts);
+    const normSev = rawAvgSev.map(v => Math.round(v / 4 * 10 * 10) / 10); // 4 is max severity
+    const normVulns = normalize(rawVulns);
+    const normUsers = normalize(rawUsers);
+    const normCriticals = normalize(rawCriticals);
+
+    const labels = ['Total Alerts', 'Avg Severity', 'Unique Vulnerabilities', 'Users Affected', 'Critical Alerts'];
+
+    const colors = [
+      { bg: 'rgba(0, 212, 255, 0.15)', border: 'rgba(0, 212, 255, 0.8)' },
+      { bg: 'rgba(249, 99, 50, 0.15)', border: 'rgba(249, 99, 50, 0.8)' },
+      { bg: 'rgba(0, 229, 160, 0.15)', border: 'rgba(0, 229, 160, 0.8)' },
+      { bg: 'rgba(255, 212, 59, 0.15)', border: 'rgba(255, 212, 59, 0.8)' },
+      { bg: 'rgba(167, 139, 250, 0.15)', border: 'rgba(167, 139, 250, 0.8)' },
+      { bg: 'rgba(244, 114, 182, 0.15)', border: 'rgba(244, 114, 182, 0.8)' }
+    ];
+
+    const datasets = types.map((type, i) => {
+      const c = colors[i % colors.length];
       return {
-        label: src,
-        data: userIds.map(uid => (userSourceCounts[uid] && userSourceCounts[uid][src]) || 0),
-        backgroundColor: colors.bg,
-        borderColor: colors.border,
-        borderWidth: 1
+        label: type,
+        data: [normAlerts[i], normSev[i], normVulns[i], normUsers[i], normCriticals[i]],
+        backgroundColor: c.bg,
+        borderColor: c.border,
+        borderWidth: 2,
+        pointBackgroundColor: c.border,
+        pointRadius: 3,
+        pointHoverRadius: 5
       };
     });
 
     new Chart(canvas, {
-      type: 'horizontalBar',
+      type: 'radar',
       data: { labels, datasets },
       options: {
         maintainAspectRatio: false,
@@ -794,26 +835,32 @@ async function loadAlertSourceByUser() {
           titleFontColor: '#e8edf5',
           bodyFontColor: '#7a8ba8',
           borderColor: 'rgba(0,212,255,0.2)',
-          borderWidth: 1,
-          mode: 'index'
+          borderWidth: 1
         },
-        scales: {
-          xAxes: [{
-            stacked: true,
-            ticks: { fontColor: '#7a8ba8', beginAtZero: true, stepSize: 1 },
-            gridLines: { color: 'rgba(0,212,255,0.06)', zeroLineColor: 'rgba(0,212,255,0.1)' }
-          }],
-          yAxes: [{
-            stacked: true,
-            ticks: { fontColor: '#7a8ba8' },
-            gridLines: { color: 'rgba(0,212,255,0.06)' }
-          }]
+        scale: {
+          ticks: {
+            beginAtZero: true,
+            max: 10,
+            stepSize: 2,
+            fontColor: '#4a5a72',
+            backdropColor: 'transparent'
+          },
+          gridLines: {
+            color: 'rgba(0,212,255,0.08)'
+          },
+          angleLines: {
+            color: 'rgba(0,212,255,0.08)'
+          },
+          pointLabels: {
+            fontColor: '#7a8ba8',
+            fontSize: 11
+          }
         }
       }
     });
 
   } catch (err) {
-    console.error('Error loading alert source by user:', err);
+    console.error('Error loading asset risk radar:', err);
   }
 }
 
