@@ -126,9 +126,10 @@
 
         <!-- Section 2: Pie Charts -->
         <section id="pie-charts">
+
+          <!-- Row 1: Three donut/pie charts -->
           <div class="row">
 
-            <!-- Pie Chart 1 -->
             <div class="col-lg-4">
               <div class="card card-chart">
                 <div class="card-header">
@@ -143,7 +144,6 @@
               </div>
             </div>
 
-            <!-- Pie Chart 2 -->
             <div class="col-lg-4">
               <div class="card card-chart">
                 <div class="card-header">
@@ -158,25 +158,6 @@
               </div>
             </div>
 
-            <!-- Pie Chart 3 -->
-            <div class="col-lg-4">
-              <div class="card card-chart">
-                <div class="card-header">
-                  <h5 class="card-category">Alerts</h5>
-                  <h3 class="card-title">Asset Type</h3>
-                </div>
-                <div class="card-body">
-                  <div class="chart-area">
-                    <canvas id="assetChart"></canvas>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-          </div>
-
-          <!-- New row for Priority Bucket chart -->
-          <div class="row">
             <div class="col-lg-4">
               <div class="card card-chart">
                 <div class="card-header">
@@ -190,7 +171,26 @@
                 </div>
               </div>
             </div>
+
           </div>
+
+          <!-- Row 2: Asset Type full width -->
+          <div class="row">
+            <div class="col-12">
+              <div class="card card-chart">
+                <div class="card-header">
+                  <h5 class="card-category">Alerts</h5>
+                  <h3 class="card-title">Asset Type</h3>
+                </div>
+                <div class="card-body">
+                  <div class="chart-area">
+                    <canvas id="assetChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </section>
 
         <!-- Section 3: Tables -->
