@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Login - Security Posture Dashboard</title>
+  <link href="https://fonts.googleapis.com/css?family=Poppins:200,300,400,600,700,800" rel="stylesheet" />
+  <link href="styles.css?v=2" rel="stylesheet" />
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #1e1e2f;
+      margin: 0;
+    }
+    .auth-card {
+      background: #27293d;
+      border-radius: 8px;
+      padding: 30px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 4px 20px 0px rgba(0, 0, 0, 0.14);
+      color: #ffffff;
+    }
+    .auth-card h3 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #fff;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #484b63;
+      background: #1e1e2f;
+      color: #fff;
+      box-sizing: border-box;
+    }
+    .btn-auth {
+      width: 100%;
+      padding: 10px;
+      background: #e14eca;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    .btn-auth:hover {
+      background: #ba38a4;
+    }
+    .auth-switch {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 0.9em;
+    }
+    .auth-switch a {
+      color: #ba54f5;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .error-msg {
+      color: #ff5a5f;
+      text-align: center;
+      margin-top: 10px;
+    }
+    .success-msg {
+      color: #00f2c3;
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-card">
+    <h3 id="auth-title">Login</h3>
+    <form id="auth-form">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="username" class="form-control" required />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" class="form-control" required />
+      </div>
+      <button type="submit" class="btn-auth" id="submit-btn">Login</button>
+    </form>
+    <div id="auth-message" class="error-msg"></div>
+    <div class="auth-switch">
+      <span id="switch-text">Don't have an account? </span>
+      <a id="switch-mode">Register</a>
+    </div>
+  </div>
+
+  <script src="login.js"></script>
+</body>
+</html>

@@ -5,6 +5,8 @@ const path = require('path');
 const chokidar = require('chokidar');
 const cors = require('cors');
 require('dotenv').config();
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 app.use(cors());
@@ -23,6 +25,8 @@ const transporter = nodemailer.createTransport({
 const ALERTS_CSV_PATH = path.join(__dirname, 'alerts.csv');
 const USER_BEHAVIORS_CSV_PATH = path.join(__dirname, 'user_behaviors.csv');
 const USERS_CSV_PATH = path.join(__dirname, 'users.csv');
+const AUTH_USERS_CSV_PATH = path.join(__dirname, 'auth_users.csv');
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-for-dev';
 
 // Function to parse CSV
 function parseCSV(content) {
@@ -367,6 +371,67 @@ watcher.on('change', async () => {
   } catch (error) {
     console.error('Error processing alerts file change:', error);
   }
+});
+
+// Authentication API Endpoints
+app.post('/api/register', async (req, res) => {
+  const { username, password } = req.body;
+  
+  if (!username || !password) {
+    return res.status(400).json({ success: false, error: 'Missing username or password' });
+  }
+
+  let users = [];
+  if (fs.existsSync(AUTH_USERS_CSV_PATH)) {
+    const content = fs.readFileSync(AUTH_USERS_CSV_PATH, 'utf-8');
+    users = parseCSV(content);
+  }
+
+  if (users.some(u => u.Username === username)) {
+    return res.status(400).json({ success: false, error: 'Username already exists' });
+  }
+
+  try {
+    const hash = await bcrypt.hash(password, 10);
+    const date = new Date().toISOString();
+    const newRow = `${username},${hash},${date}\n`;
+    
+    fs.appendFileSync(AUTH_USERS_CSV_PATH, newRow);
+    
+    res.json({ success: true, message: 'User registered successfully' });
+  } catch (error) {
+    console.error('Error during registration:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ success: false, error: 'Missing username or password' });
+  }
+
+  if (!fs.existsSync(AUTH_USERS_CSV_PATH)) {
+    return res.status(401).json({ success: false, error: 'Invalid credentials' });
+  }
+
+  const content = fs.readFileSync(AUTH_USERS_CSV_PATH, 'utf-8');
+  const users = parseCSV(content);
+  
+  const user = users.find(u => u.Username === username);
+  if (!user) {
+    return res.status(401).json({ success: false, error: 'Invalid credentials' });
+  }
+
+  const isMatch = await bcrypt.compare(password, user.PasswordHash);
+  if (!isMatch) {
+    return res.status(401).json({ success: false, error: 'Invalid credentials' });
+  }
+
+  const token = jwt.sign({ username: user.Username }, JWT_SECRET, { expiresIn: '24h' });
+  
+  res.json({ success: true, token });
 });
 
 const PORT = process.env.PORT || 3000;

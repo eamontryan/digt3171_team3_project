@@ -2,6 +2,16 @@ type = ['primary', 'info', 'success', 'warning', 'danger'];
 let assetTypeChart = null;
 let priorityBucketChart = null;
 
+// Auth Logic
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('token');
+    window.location.href = 'login.html';
+  });
+}
+
+
 // ----------------------------
 // GLOBAL STATE (so we can re-sort + re-render without re-fetching)
 // ----------------------------

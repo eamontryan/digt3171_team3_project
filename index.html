@@ -6,6 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>Security Posture Dashboard</title>
 
+  <!-- JWT Check -->
+  <script>
+    if (!localStorage.getItem('token')) {
+      window.location.href = 'login.html';
+    }
+  </script>
+
   <!-- Fonts and icons -->
   <link href="https://fonts.googleapis.com/css?family=Poppins:200,300,400,600,700,800" rel="stylesheet" />
   <link href="https://use.fontawesome.com/releases/v5.0.6/css/all.css" rel="stylesheet">
@@ -63,6 +70,7 @@
           <div class="navbar-actions">
             <button class="btn btn-primary" id="alertSimulationBtn">Alert Simulation</button>
             <button class="btn btn-warning" id="behaviorSimulationBtn" style="margin-left: 10px;">User Behavior</button>
+            <button class="btn btn-danger" id="logoutBtn" style="margin-left: 10px;">Logout</button>
           </div>
         </div>
       </nav>
