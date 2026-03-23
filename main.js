@@ -795,7 +795,18 @@ async function loadAlertSourceByUser() {
     const normUsers = normalize(rawUsers);
     const normCriticals = normalize(rawCriticals);
 
-    const labels = ['Total Alerts', 'Avg Severity', 'Unique Vulnerabilities', 'Users Affected', 'Critical Alerts'];
+    const dimLabels = ['Alert Volume', 'Severity Level', 'Vuln Diversity', 'User Exposure', 'Critical Rate'];
+
+    // Store raw values per type for tooltips
+    const rawDataByType = types.map((t, i) => ({
+      alerts: rawAlerts[i],
+      avgSev: rawAvgSev[i],
+      vulns: rawVulns[i],
+      users: rawUsers[i],
+      criticals: rawCriticals[i]
+    }));
+
+    const sevLabels = ['', 'Low', 'Medium', 'High', 'Critical'];
 
     const colors = [
       { bg: 'rgba(0, 212, 255, 0.15)', border: 'rgba(0, 212, 255, 0.8)' },
@@ -822,7 +833,7 @@ async function loadAlertSourceByUser() {
 
     new Chart(canvas, {
       type: 'radar',
-      data: { labels, datasets },
+      data: { labels: dimLabels, datasets },
       options: {
         maintainAspectRatio: false,
         legend: {
@@ -835,7 +846,24 @@ async function loadAlertSourceByUser() {
           titleFontColor: '#e8edf5',
           bodyFontColor: '#7a8ba8',
           borderColor: 'rgba(0,212,255,0.2)',
-          borderWidth: 1
+          borderWidth: 1,
+          callbacks: {
+            label: function(tooltipItem, data) {
+              const dsIndex = tooltipItem.datasetIndex;
+              const dimIndex = tooltipItem.index;
+              const typeName = types[dsIndex];
+              const raw = rawDataByType[dsIndex];
+              const score = tooltipItem.yLabel;
+              const rawLabels = [
+                `${raw.alerts} alerts`,
+                `${sevLabels[Math.round(raw.avgSev)] || raw.avgSev.toFixed(1)} avg`,
+                `${raw.vulns} vulnerabilities`,
+                `${raw.users} users`,
+                `${raw.criticals} critical`
+              ];
+              return `${typeName}: ${rawLabels[dimIndex]} (score: ${score}/10)`;
+            }
+          }
         },
         scale: {
           ticks: {

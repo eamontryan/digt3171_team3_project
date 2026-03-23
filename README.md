@@ -27,6 +27,7 @@ The system is intentionally lightweight and transparent, using CSV files as data
 - Dynamic risk scoring engine that recalculates scores on server startup to prevent data drift.
 - Risk scores are derived from alert history and categorized using standardized severity buckets (Low, Medium, High, Critical).
 - Scoring logic is calibrated to prevent users from reaching maximum risk too quickly, producing more realistic results.
+- Clicking any user opens a detail modal with a full risk breakdown, associated alerts, and the ability to submit manual risk score adjustments with justification comments.
 
 ### 🖥️ Asset Tracking & Analysis
 - Asset inventory dynamically aggregates:
@@ -53,6 +54,13 @@ The system is intentionally lightweight and transparent, using CSV files as data
 - Automatically sends an email notification when a new alert is detected.
 - Includes an **Alert Simulation** feature allowing users to trigger test alerts and verify notifications.
 
+### 📈 Advanced Analytics
+- A dedicated **Analytics** section provides deeper insight into security posture through four visualizations:
+  - **Department vs Severity Heatmap** — A color-coded matrix showing alert counts across each department and severity level, highlighting organizational risk hotspots.
+  - **Severity Over Time** — A stacked area chart tracking how Critical, High, Medium, and Low alerts trend month-over-month, revealing whether the threat landscape is escalating.
+  - **Vulnerability Risk Matrix** — A bubble chart plotting each CVE by Exploitability Score vs CVSS Score, with bubble size representing alert count. Helps prioritize remediation by visualizing which vulnerabilities are both high-impact and highly exploitable.
+  - **Asset Risk Profile Radar** — A radar chart comparing asset types (Server, Cloud, Networking, Workstation) across five normalized dimensions: alert volume, severity level, vulnerability diversity, user exposure, and critical alert rate.
+
 ### 🔀 Sortable Tables
 - Vulnerability and Asset tables support sorting by:
   - Alphabetical order
@@ -74,8 +82,6 @@ The system is intentionally lightweight and transparent, using CSV files as data
 ## 🗺️ Future Improvements
 
 Planned enhancements include:
-- Advanced visualizations such as risk heatmaps
-- Authentication and login system
 - Expanded alert management views
 - UI/UX refinement
 - Full testing and documentation pass
